@@ -1,95 +1,80 @@
-# Tcam Stereo Capture
-This sample shows how to capture and save images from two cameras. The cameras are synchronized by software trigger,
+# Save an Image using OpenCV in C++
+This sample shows, how to to use save images from camera live stream using a callback and OpenCV,
 
-## Prerequisites
+Programming language : C++
+
+## Prerequisits
 The sample uses the the examples/cpp/common/tcamcamera.cpp and .h files of the *tiscamera* repository as wrapper around the
 [GStreamer](https://gstreamer.freedesktop.org/) code and property handling. Adapt the CMakeList.txt accordingly.
 Image saving is done using OpenCV. The GSTBuffer is copied to an [cv::Mat](https://docs.opencv.org/3.1.0/d3/d63/classcv_1_1Mat.html)
-
-
+ 
 In "main.cpp" search the line which contents
-``` C++
-TcamCamera cam1("00001234");
-TcamCamera cam2("00001234");
-```
-and exchange "00001234" by the serial numbers of your cameras. The following documentation is mainly for one camera, the very same we do with cam1 we must do with cam2 too.
+```TcamCamera cam("00001234");```
+and exchange "00001234" by the serial number of your camera.
 
 ## Building
 In order to build the sample, open a terminal, enter the sample's directory. Then enter
-``` bash
+```
 mkdir build
 cd build 
 cmake ..
 make
-./tcamstereocapture
+./tcamopencvsaveimage
 ```
 
-## The Camera Object
-The tiscamera repository provides the TcamCamera class, which wraps all the GStreamer code. Since there are two cameras to be handled, two instances of this class are needed:
-``` C++
-TcamCamera cam1("00001234");
-TcamCamera cam2("00005678");
-```
+## General Program Flow
+The program opens and configures a camera. It also adds a callback function, which is used to handle the incoming image data. A data structure is used to control, when a frame should be saved.
 
-## Using the Softwaretrigger
-For the software trigger, two properties are needed. The "Trigger Mode", which is used to enable or disabe the trigger mode in the camera and the "Softwaretrigger" property.
-### Getting the Trigger Mode Property
-First of al the declaration.
+## Handling the Camera
+The tiscamera repository provides the TcamCamera class, which wraps all the GStreamer code. The TcamCamera class is instantiated as follows:
 ``` C++
-std::shared_ptr<Property> TriggerMode;
-```
-Not all camera models support trigger mode. The the camera does not support trigger mode, the TcamCamera object will throw an exception. Therefore, the property is queried in a try..catch block:
-
-``` C++
-try
-{
-    TriggerMode = cam1.get_property("Trigger Mode");
-}
-catch(...)
-{
-    printf("Your camera does not support triggering.\n");
-}
-```
-The trigger mode is set with different parameters for USB and GigE cameras (unfortunally). The TriggerMode property must be querried only once, because the TcamCamera object is passed to the set and get functions.
-
-Use the string parameters "On" and "Off for GigE cameras:
-
-``` C++
-TriggerMode->set(cam1,"On"); // Use this line for GigE cameras
+TcamCamera cam("00001234");
 ``` 
-Use the interger parameter 1 and 0 for USB cameras.
-
+The video format resolution and frame rate is set with
 ``` C++
-TriggerMode->set(cam1,1); // Use this line for USB cameras
+// Set video format, resolution and frame rate
+cam.set_capture_format("BGRx", FrameSize{640,480}, FrameRate{30,1});
+``` 
+The tcam-ctrl -c <serial> program is used for getting a list of supported video format resoutions and frame rates.
+
+The programmer can decide, whether a live video window should be shown:
+```C++
+// Comment following line, if no live video display is wanted.
+cam.enable_video_display(gst_element_factory_make("ximagesink", NULL));
 ```
-If is is not sure what to use, then the ```ListProperties(cam);``` function shows, which is correct for the currently used camera.
+In the next step the callback function is passed to the camera class:
+```C++
+// Register a callback to be called for each new frame
+cam.set_new_frame_callback(new_frame_cb, &CustomData);
+```
 
-### Getting the Software Trigger Property
-The same method as shown at Trigger Mode is used for the software trigger:
+Now the live video can be started:
+```C++
+// Start the camera
+cam.start();
+```
+It is stopped at program end with
+```C++
+// Start the camera
+cam.stop();
+```
 
-``` C++
-std::shared_ptr<Property> Softwaretrigger;
-try
+## The Custom Data Struct
+```C++
+// Create a custom data structure to be passed to the callback function. 
+typedef struct
 {
-    Softwaretrigger = cam1.get_property("Software Trigger");
-}
-catch(...)
-{
-    printf("Your camera does not support software triggering.\n");
-}
+    int ImageCounter;  // Counter for images
+    bool SaveNextImage; // Flag, whether the next incoming image will be saved
+    bool busy; // Busy flag
+    cv::Mat frame;  // OpenCV Matrix for the image processing
+} CUSTOMDATA;
 ```
+This structure is passed to the callback function and will be used for controling of image saving. If the flag ```SaveNextImage````is set to false, no images will be saved. It if is set to true, the next image will be saved and set to false in the callback function.
 
-**Attention**: The "Software Trigger" property name can be different on USB and GigE camera. The ```ListProperties(cam);``` is here helpful again for listing available properties.
 
-The SoftwareTrigger property must be querried only once, because the TcamCamera object is passed to the set and get functions.
-
-The software trigger is a so called push property. That means it is pushed like a button. Therefore there is an integer value set to release the trigger pulse. So the following line releases the trigger and the camera is mentioned to sent one image:
-
-``` C++
-Softwaretrigger->set(cam1,1);
-```
 ## The Callback
-It always is recommened to use a callback, if a camera runs triggered. The callback's function is declared as follows:
+The callback's function is declared as follows:
 ``` C++
 GstFlowReturn new_frame_cb(GstAppSink *appsink, gpointer data)
 ```
@@ -109,28 +94,11 @@ int Counter = 0
 cam.set_new_frame_callback(new_frame_cb, &Counter);
 ```
 
-The sample uses a struct named "CUSTOMDATA".
-``` C++
-typedef struct
-{
-    int ImageCounter;       // Counter used for filename generation
-    bool ReceivedAnImage;   // indicates a new image handled
-    bool busy;              // indicates the callback being busy
-    char imageprefix[55];   // Prefix for the image file names.
-    cv::Mat frame;          // OpenCV Mat used for image saving.
-} CUSTOMDATA;
-```
-The CUSTOMDATA struct will be instantiate for each camera:
-``` C++
-CUSTOMDATA CustomData1;  // Customdata for camera 1
-CUSTOMDATA CustomData2;  // Customdata for camera 2
-```
 
-It is passed to the callback for each camera as follows:
+The above mentioned custom data struct is passed to the callback 
 ``` C++
 // Register a callback to be called for each new frame
-cam1.set_new_frame_callback(new_frame_cb, &CustomData1);
-cam2.set_new_frame_callback(new_frame_cb, &CustomData2);
+cam.set_new_frame_callback(new_frame_cb, &CustomData);
 ```
 
 The complete callback function is as follows.
@@ -144,44 +112,51 @@ GstFlowReturn new_frame_cb(GstAppSink *appsink, gpointer data)
 
     // Cast gpointer to CUSTOMDATA*
     CUSTOMDATA *pCustomData = (CUSTOMDATA*)data;
+    if( !pCustomData->SaveNextImage)
+        return GST_FLOW_OK;
+    pCustomData->SaveNextImage = false;
 
-    if( pCustomData->busy) // Return, if will are busy. Will result in frame drops
-       return GST_FLOW_OK;
-
-    pCustomData->busy = true;
+    pCustomData->ImageCounter++;
 
     // The following lines demonstrate, how to acces the image
     // data in the GstSample.
     GstSample *sample = gst_app_sink_pull_sample(appsink);
-    GstCaps *caps = gst_sample_get_caps(sample);
 
-    str = gst_caps_get_structure (caps, 0);    
+    GstBuffer *buffer = gst_sample_get_buffer(sample);
 
-    if( strcmp( gst_structure_get_string (str, "format"),"BGRx") == 0)  
+    GstMapInfo info;
+
+    gst_buffer_map(buffer, &info, GST_MAP_READ);
+    
+    if (info.data != NULL) 
     {
-        gst_structure_get_int (str, "width", &width);
-        gst_structure_get_int (str, "height", &height);
+        // info.data contains the image data as blob of unsigned char 
 
-        // Get the image data
-        GstMapInfo info;
-        GstBuffer *buffer = gst_sample_get_buffer(sample);
-        gst_buffer_map(buffer, &info, GST_MAP_READ);
-        if (info.data != NULL) 
+        GstCaps *caps = gst_sample_get_caps(sample);
+        // Get a string containg the pixel format, width and height of the image        
+        str = gst_caps_get_structure (caps, 0);    
+
+        if( strcmp( gst_structure_get_string (str, "format"),"BGRx") == 0)  
         {
-            // Create the cv::Mat
+            // Now query the width and height of the image
+            gst_structure_get_int (str, "width", &width);
+            gst_structure_get_int (str, "height", &height);
+
+            // Create a cv::Mat, copy image data into that and save the image.
             pCustomData->frame.create(height,width,CV_8UC(4));
-            // Copy the image data from GstBuffer intot the cv::Mat
             memcpy( pCustomData->frame.data, info.data, width*height*4);
-            // Set the flag for received and handled an image.
-            pCustomData->ReceivedAnImage = true;
+            char ImageFileName[256];
+            sprintf(ImageFileName,"image%05d.jpg", pCustomData->ImageCounter);
+            cv::imwrite(ImageFileName,pCustomData->frame);
         }
-        gst_buffer_unmap (buffer, &info);
-    }    
+
+    }
+    
     // Calling Unref is important!
+    gst_buffer_unmap (buffer, &info);
     gst_sample_unref(sample);
 
     // Set our flag of new image to true, so our main thread knows about a new image.
-    pCustomData->busy = false;
     return GST_FLOW_OK;
 }
 ```
@@ -218,98 +193,15 @@ memcpy( pCustomData->frame.data, info.data, width*height*4);
 ``` 
 cv::Mat::create() wont allocate new memory, if the width, height and bytes per pixels did not change.
 
+Now the image file name is created an the image is saved.
+``` C++
+char ImageFileName[256];
+sprintf(ImageFileName,"image%05d.jpg", pCustomData->ImageCounter);
+cv::imwrite(ImageFileName,pCustomData->frame);
+```
 Very important: The references to the GStreamer objects must be cleared afterwards:
 
 ``` C++
 gst_buffer_unmap (buffer, &info);
 gst_sample_unref(sample);
-``` 
-
-## The Main Program
-In the main program the neccessary camera properties for trigger mode and software trigger are querried. In the first step, the trigger mode is disabled and the cameras are started. Since we have the code
-``` C++
-CustomData1.busy = true;
-CustomData2.busy = true;
-``` 
-the callback function will return without saving images. The cameras are running free now and can be pointed correctly to the scene. The program waits for an Enter-key press. If this key is pressed, the cameras will be set into trigger mode:
-
-``` C++
-// Enable trigger mode
-TriggerMode->set(cam1,1);
-TriggerMode->set(cam2,1);
-``` 
-Now the live stream stops, until trigger pulses, in our case software trigger pulses will be send to the cameras.
-
-Also the callback function must be advised to save the images:
-``` C++
-CustomData1.busy = false;
-CustomData2.busy = false;
-``` 
-
-For simplyfying the trigger and capture process here, there is a simple loop, that runs some times.
-Before the software triggers are sent, the flag ReceivedAnImage is reset to false.
-``` C++
-// Enable trigger mode
-CustomData1.ReceivedAnImage = false;
-CustomData2.ReceivedAnImage = false;
 ```
-This flag will be set to true in the callback function after a new image was saved in the cv::Mat of the CustomData structs. Now the software triggers are fired.
-``` C++
-Softwaretrigger->set(cam1,1);
-Softwaretrigger->set(cam2,1);
-```
-
-
-The program waits for the images of both cameras by evaluating the ReceivedAnImage flags:
-``` C++
-// Wait with timeout until we got images from both cameras.
-int tries = 50;
-while( !( CustomData1.ReceivedAnImage || CustomData2.ReceivedAnImage) && tries >= 0)
-{
-    usleep(100000); 
-    tries--;
-}
-```
-
-It is a loop with timeout, because it may happens, we do not get a complete iamges from the camera, which results into frame drops. In case there are too many frames not received, try higher initial values for tries.
-After the timeout loop, it is checked, whether there images from both cameras and the images are processed.
-``` C++
-// If there are images received from both cameras, save them.
-if(CustomData1.ReceivedAnImage && CustomData1.ReceivedAnImage)
-{
-    SaveImage(&CustomData1);
-    SaveImage(&CustomData2);
-}
-```
-If both ReceivedAnImage flags are true, an image pair was received. It will be saved then. If not, there is a check, which camera did not send images. 
-
-``` C++
-// Check, from which camera we may did not receive an image. 
-// It is for convinience only and could be deleted.
-if(!CustomData1.ReceivedAnImage)
-    printf("Did not receive an image from camera 1.\n");
-    
-if(!CustomData2.ReceivedAnImage)
-    printf("Did not receive an image from camera 2.\n");
-```
-
-After this saving there is no sleep or other waiting. Therefore, the program captures and saves the images as fast as possible. This speed depends on the camera's frame rate, exposure time and the speed of the computer's hard disc.
-
-## ImageSaving
-The CustomData1 and CustomData2 structures contain the cv::Mat with the image, so it can be processed when images where received. Here it the cv::Mat is saved:
-``` C++
-////////////////////////////////////////////////////////////////////
-// Increase the frame count and save the image in CUSTOMDATA
-void SaveImage(CUSTOMDATA *pCustomData)
-{
-    char ImageFileName[256];
-    pCustomData->ImageCounter++;
-
-    sprintf(ImageFileName,"%s%05d.jpg", pCustomData->imageprefix,  pCustomData->ImageCounter);
-    cv::imwrite(ImageFileName,pCustomData->frame);
-}
-```
-The Image file name is created using the data passed by the pCustomData structure. It contains the image prefix, so it is known, which data comes from cam1 and which from cam2. The image counter is increased, so the image pairs can be found in the directory of the jpeg files.
-
-
-
