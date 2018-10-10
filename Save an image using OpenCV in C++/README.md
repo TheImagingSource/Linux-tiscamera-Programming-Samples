@@ -205,3 +205,57 @@ Very important: The references to the GStreamer objects must be cleared afterwar
 gst_buffer_unmap (buffer, &info);
 gst_sample_unref(sample);
 ```
+
+## The main function
+The program starts the camera, saves every two seconds on image and ends when 10 images have been saved.
+``` C++
+int main(int argc, char **argv)
+{
+    gst_init(&argc, &argv);
+    // Declare custom data structure for the callback
+    CUSTOMDATA CustomData;
+
+    CustomData.ImageCounter = 0;
+    CustomData.SaveNextImage = false; // Set to false, because we do not want to save an image now.
+
+    
+    printf("Tcam OpenCV Image Sample\n");
+
+    // Open camera by serial number
+    TcamCamera cam("10610452");
+    
+    
+    // Set video format, resolution and frame rate
+    cam.set_capture_format("BGRx", FrameSize{640,480}, FrameRate{30,1});
+
+    // Comment following line, if no live video display is wanted.
+    cam.enable_video_display(gst_element_factory_make("ximagesink", NULL));
+
+    // Register a callback to be called for each new frame
+    cam.set_new_frame_callback(new_frame_cb, &CustomData);
+    
+    // Start the camera
+    cam.start();
+
+    // Uncomment following line, if properties shall be listed. Many of the
+    // properties that are done in software are available after the stream 
+    // has started. Focus Auto is one of them.
+    // ListProperties(cam);
+
+    for( int i = 0; i< 10; i++)
+    {
+        CustomData.SaveNextImage = true; // Save the next image in the callcack call
+        sleep(2);
+    }
+
+
+    // Simple implementation of "getch()"
+    printf("Press Enter to end the program");
+    char dummyvalue[10];
+    scanf("%c",dummyvalue);
+
+    cam.stop();
+
+    return 0;
+}
+```
