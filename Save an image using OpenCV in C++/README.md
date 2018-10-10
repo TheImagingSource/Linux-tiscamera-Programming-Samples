@@ -5,12 +5,18 @@ Programming language : C++
 
 ## Prerequisits
 The sample uses the the examples/cpp/common/tcamcamera.cpp and .h files of the *tiscamera* repository as wrapper around the
-[GStreamer](https://gstreamer.freedesktop.org/) code and property handling. Adapt the CMakeList.txt accordingly.
-Image saving is done using OpenCV. The GSTBuffer is copied to an [cv::Mat](https://docs.opencv.org/3.1.0/d3/d63/classcv_1_1Mat.html)
- 
-In "main.cpp" search the line which contents
-```TcamCamera cam("00001234");```
-and exchange "00001234" by the serial number of your camera.
+[GStreamer](https://gstreamer.freedesktop.org/) code and property handling. Adapt the CMakeList.txt accordingly. Open the CMakeLists.txt with your prefered text editor and change the line
+'''
+set( TISCAMERA_DIR /home/bvtest/projects/tiscamera-1.0) 
+'''
+to
+'''
+set( TISCAMERA_DIR <insert the tiscamera path here>) 
+'''
+For example
+'''
+set( TISCAMERA_DIR /home/John/tiscamera) 
+'''
 
 ## Building
 In order to build the sample, open a terminal, enter the sample's directory. Then enter
@@ -21,6 +27,7 @@ cmake ..
 make
 ./tcamopencvsaveimage
 ```
+Please change the serial number in the TcamCamera contructor call in main.cpp main() to your camera's serial number. This is documented below in detail.
 
 ## General Program Flow
 The program opens and configures a camera. It also adds a callback function, which is used to handle the incoming image data. A data structure is used to control, when a frame should be saved.
@@ -70,7 +77,7 @@ typedef struct
     cv::Mat frame;  // OpenCV Matrix for the image processing
 } CUSTOMDATA;
 ```
-This structure is passed to the callback function and will be used for controling of image saving. If the flag ```SaveNextImage````is set to false, no images will be saved. It if is set to true, the next image will be saved and set to false in the callback function.
+This structure is passed to the callback function and will be used for controling of image saving. If the flag ```SaveNextImage```is set to false, no images will be saved. It if is set to true, the next image will be saved and set to false in the callback function.
 
 
 ## The Callback
@@ -186,7 +193,7 @@ GstBuffer *buffer = gst_sample_get_buffer(sample);
 gst_buffer_map(buffer, &info, GST_MAP_READ);
 ```
 
-Now all neccessary information for creating the cv::Mat is gathered and the image can be saved in the cv::Mat. 
+Image saving is done using OpenCV. The GSTBuffer is copied to an [cv::Mat](https://docs.opencv.org/3.1.0/d3/d63/classcv_1_1Mat.html). Now all neccessary information for creating the cv::Mat is gathered and the image can be saved in the cv::Mat. 
 ``` C++
 pCustomData->frame.create(height,width,CV_8UC(4));
 memcpy( pCustomData->frame.data, info.data, width*height*4);
