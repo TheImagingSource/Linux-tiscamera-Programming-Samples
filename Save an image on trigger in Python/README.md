@@ -1,5 +1,7 @@
-# Trigger Save Image
-This sample shows how to capture from a triggered camera 
+# Save an image on trigger
+This sample shows how to capture from a triggered camera.
+
+Programming language: Python
 
 ## Prerequisites
 The sample uses the GStreamer modules from the *tiscamera* repository as wrapper around the
