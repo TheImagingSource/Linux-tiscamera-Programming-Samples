@@ -1,5 +1,5 @@
 # Save an Image using OpenCV in C++
-This sample shows, how to to use save images from camera live stream using a callback and OpenCV,
+This sample shows, how to save images from a The Imaging Source camera using a callback and OpenCV. It works for USB as well for GigE cameras.
 
 Programming language : C++
 
