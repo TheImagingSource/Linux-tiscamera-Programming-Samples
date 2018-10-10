@@ -259,3 +259,6 @@ int main(int argc, char **argv)
     return 0;
 }
 ```
+
+### Annotation
+We are aware this sample is somewhat complicated, because a programmer may expect a "snapImage" function rather than a callback. We hope, a "snapImage" will be implemented soon in the TcamCamera class.
