@@ -1,0 +1,168 @@
+# Trigger Save Image
+This sample shows how to capture from a triggered camera 
+
+## Prerequisites
+The sample uses the GStreamer modules from the *tiscamera* repository as wrapper around the
+[GStreamer](https://gstreamer.freedesktop.org/) code and property handling. It also uses OpenCV for image processing.
+
+## Files
+### TIS.py
+In this file the "TIS" class is implemented, which is a wrapper around the GStreamer code. 
+### Program.py
+This is the main file of the sample.
+
+## Basics of TIS class
+In the constructur of TIS a camera is opened. Therefore, the serial number, width and height of the video format and the frame rate is passed. The last parameter determines, whether the image will be colored or gray scale.
+
+``` Python
+Tis = TIS.TIS("48610605", 1920, 1080, 15, True)
+``` 
+
+Exchange "48610605" by the serial numbers of your camera. The program "tcam-ctrl -c <serialnumber>" lists the available video formats and their frame rates. This sample line will use 1920x1080 with 15 frames per second colored.
+After TIS constrcution the live video can be started
+``` Python
+Tis.Start_pipeline()
+``` 
+The live video is stopped, with
+``` Python
+Tis.Stop_pipeline()
+``` 
+
+If these three lines are used without anything else, no live video will be shown, because the pipeline in the TIS class does not use a display sink (e.g. ximagesink). The images are only saved in a ring buffer in memory.
+
+## Triggering
+If a camera is triggered, it is always recommended to use a callback function for received images. This avoids a blocking wait for images. The callback function looks like follows:
+``` Python
+def on_new_image(tis, userdata):
+        '''
+        Callback function, which will be called by the TIS class
+        :param tis: the camera TIS class, that calls this callback
+        :param userdata: This is a class with user data, filled by this call.
+        :return:
+        '''
+        # Avoid being called, while the callback is busy
+        if userdata.busy is True:
+                return
+
+        userdata.busy = True
+        userdata.newImageReceived = True
+        userdata.image = tis.Get_image()
+        userdata.busy = False
+``` 
+The parameters are a reference to the calling TIS class and a class passed to userdata. The user data should be declared as follows:
+``` Python
+class CustomData:
+        ''' Example class for user data passed to the on new image callback function
+        '''
+
+        def __init__(self, newImageReceived, image):
+                self.newImageReceived = newImageReceived
+                self.image = image
+                self.busy = False
+``` 
+
+The callback function sample copies the received image into to ```image``` member of the ```CustomData``` and sets the ```newImageReceived``` flag to true. That will be evaluated by the main program. Of course, there can be done a lot more image processing in the callback, if needed. (I am currently not too sure, whether the buffer image wont be overwritten.)
+
+The ```CustomData``` instance is created as:
+``` Python
+CD = CustomData(False, None)
+```
+The prerequisites for the callback are finished, now the TIS class must get this information. Before we start the live video, the callback is passed to the TIS class:
+``` Python
+Tis.Set_Image_Callback(on_new_image, CD)
+```
+## Camera properties
+Camera automatics should be disabled, while the camera runs in trigger mode. Therefore some properties must be set. This is done with 
+``` Python
+Tis.Set_Property(Propertyname, Propertyvalue)
+```
+A list of properties can be shown by a call to 
+``` Python
+Tis.List_Properties()
+```
+### Trigger Mode
+``` Python
+# Tis.Set_Property("Trigger Mode", "On") # Use this line for GigE cameras
+Tis.Set_Property("Trigger Mode", True)
+```
+Unfortunately the Trigger Mode differs between USB and GigE cameras. The line above enables the trigger mode.
+Also there is another condition: 
+```Tis.Start_pipeline()``` does not return, if the Trigger Mode is enabled. Therefore, the Trigger Mode is disabled, then the pipeline is started and the Trigger Mode is enabled again. That is also the reason, why the ```CustomeData.busy``` flag is set to ```True``` before the pipeline is stated. It avoid the callback doing anything, while the trigger is not enabled. 
+So the start sequence is:
+``` Python
+Tis.Set_Property("Trigger Mode", False)
+CD.busy = True 
+Tis.Start_pipeline()
+Tis.Set_Property("Trigger Mode", True)
+CD.busy = False
+```
+
+### Software Trigger
+The software trigger lets the camera expose one image and send it to the computer. It does the same, as a hardware trigger would do. Therefore, this sample will work with hardware trigger as well, only the software trigger property must not be set. The software trigger is set with following line of code:
+``` Python
+Tis.Set_Property("Software Trigger",1) # Send a software trigger
+```
+That is all, because the function triggers only an action in the camera.
+
+### White Balance, Exposure and Gain
+As mentioned above,the automatics in the camera should be disabled, while the camera is in trigger mode.
+``` Python
+# White Balance properties, in case a color camera is in use:
+Tis.Set_Property("Whitebalance Auto", False)
+Tis.Set_Property("Whitebalance Red", 64)
+Tis.Set_Property("Whitebalance Green", 50)
+Tis.Set_Property("Whitebalance Blue", 64)
+
+# Query the gain auto and current value :
+print("Gain Auto : %s " % Tis.Get_Property("Gain Auto").value)
+print("Gain : %d" % Tis.Get_Property("Gain").value)
+
+# Check, whether gain auto is enabled. If so, disable it.
+if Tis.Get_Property("Gain Auto").value :
+        Tis.Set_Property("Gain Auto",False)
+        print("Gain Auto now : %s " % Tis.Get_Property("Gain Auto").value)
+
+Tis.Set_Property("Gain",0)
+
+# Now do the same with exposure. Disable automatic if it was enabled
+# then set an exposure time.
+if Tis.Get_Property("Exposure Auto").value :
+        Tis.Set_Property("Exposure Auto", False)
+        print("Exposure Auto now : %s " % Tis.Get_Property("Exposure Auto").value)
+
+Tis.Set_Property("Exposure", 3000)
+```
+
+## Mainloop
+The main loop fires the software trigger and processes the image returned in ```CustomData```
+``` Python
+try:
+        while lastkey != 27 and error < 5:
+                time.sleep(1)
+                Tis.Set_Property("Software Trigger",1) # Send a software trigger
+
+                # Wait for a new image. Use 10 tries.
+                tries = 10
+                while CD.newImageReceived is False and tries > 0:
+                        time.sleep(0.1)
+                        tries -= 1
+
+                # Check, whether there is a new image and handle it.
+                if CD.newImageReceived is True:
+                        CD.newImageRecevied = False
+                        cv2.imshow('Window', CD.image)
+                else:
+                        print("No image received")
+
+                lastkey = cv2.waitKey(10)
+
+except KeyboardInterrupt:
+        cv2.destroyWindow('Window')
+```
+Of course this looks like polling for an image, which in fact it is. Using software trigger is a nice way to make sure an image was received for each software trigger. Also `cv2.imshow` did not work as expected in the callback.
+
+However, if there is hardware trigger used, then e.g image processing or image saving can be done in the callback function. Then there would be no code in the main loop, except user input handling.
+
+
+
+
