@@ -109,10 +109,11 @@ On success, the program can enable and disable the automatics for gain and expos
     }
 ```
 The call to ```ExposureAuto->get(cam,Auto);``` returns the current value in the variable auto. Since this is a integer variable, an ```int``` value is passed. Parameters to ```property.get()``` are
-|Parameter | Description |
-|---| ---|
-|TcamCamera&| The TcamCamera object, on which the property is queried| 
-| value& | The varialbe, that recevies the current value. Different types are allowed for value.|
+
+| Parameter | Description |
+| --- | --- |
+| TcamCamera& | The TcamCamera object, on which the property is queried. | 
+| value& | The varialbe, that recevies the current value. Different types are allowed for value. |
 
 The value types are
 * int
@@ -146,10 +147,12 @@ The code above disables the exposure automatic by passing a 0 as second paramete
 ```
 
 Parameters to ```property.set()``` are
+
 |Parameter | Description |
 |---| ---|
 |TcamCamera&| The TcamCamera object, on which the property is queried| 
 | value | The value to be written for the property.|
+
 
 The value types are
 * int
