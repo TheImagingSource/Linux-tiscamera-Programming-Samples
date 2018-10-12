@@ -13,5 +13,8 @@ This Python sample shows how to turn a camera into trigger mode for software tri
 ### Save an image using OpenCV in C++
 [This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/Save%20an%20image%20using%20OpenCV%20in%20C%2B%2B) C++ sample shows how to capture images from the video stream, convert them to OpenCV cv::Mat and save them to hard disc.
 
+### Stream over Network to VLC
+[This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/Stream%20over%20Network%20to%20VLC#stream-over-network-to-vlc) article shows, how to setup a GStreamer pipeline for sending video stream to VLC over a network.
+
 ## The Imaging Source Camera and Devices FAQ
 The FAQ can be found at https://github.com/TheImagingSource/IC-Imaging-Control-Samples/wiki
