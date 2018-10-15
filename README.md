@@ -7,6 +7,9 @@ Programming samples in Pyhton and C++ for the tiscamera GStreamer modules.
 ### Save an image on trigger in Python
 This Python sample shows how to turn a camera into trigger mode for software trigger or hardware trigger and use a callback for receiving the triggered image. 
 
+### Auto Focus On Push in Python
+[This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/Auto%20Focus%20On%20Push%20in%20Python#auto-focus-on-push-in-pyhton) shows, how to control the auto focus and focus of cameras, that support that, e.g. DFK AFUJ003, DFK Z12GP031. Additionally it is shown, how to set the zoom of the GigE zoom cameras.
+
 ### Using Properties in C++
 [This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/Using%20Properties%20in%20C%2B%2B#using-properties-in-c) example shows, how to use camera properties, here exposure and gain, in C++ using the [TcamCamera](https://github.com/TheImagingSource/tiscamera/tree/master/examples/cpp/common) class.
 
