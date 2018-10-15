@@ -1,11 +1,11 @@
+
 #ifndef __TCAMIMAGE__
 #define __TCAMIMAGE__
-#endif
 
 #include "tcamcamera.h"
 #include <mutex>
 #include <condition_variable>
-
+#include <vector>
 
 class TcamImage : public gsttcam::TcamCamera
 {
@@ -17,22 +17,22 @@ class TcamImage : public gsttcam::TcamCamera
         int getWidth()
         {
             return _CustomData.width;
-        };
+        }
         int getHeight()
         {
             return _CustomData.height;
-        };
+        }
         int getBytesPerPixel()
         {
             return _CustomData.bpp;
         }
         unsigned char* getImageData()
         {
-            return _CustomData.ImageData;
+            return _CustomData.image_data.data();
         }
         int getImageDataSize()
         {
-            return _CustomData.width * _CustomData.height * _CustomData.bpp;
+            return _CustomData.image_data.size();
         }
 
     private:
@@ -40,20 +40,19 @@ class TcamImage : public gsttcam::TcamCamera
         {
             int ImageCounter;
             bool SaveNextImage;
-            bool busy;
             std::mutex mtx;
             std::condition_variable con;
 
-            unsigned char* ImageData;
+            std::vector<uint8_t> image_data;
+
             int width;
             int height;
             int bpp;
         } CUSTOMDATA;
 
         CUSTOMDATA _CustomData;
-        
-        std::condition_variable _con;
-
 
         static GstFlowReturn new_frame_cb(GstAppSink *appsink, gpointer data);
 }; 
+
+#endif

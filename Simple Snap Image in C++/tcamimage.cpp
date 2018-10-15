@@ -11,8 +11,6 @@ TcamImage::TcamImage(std::string serial) : TcamCamera(serial)
     _CustomData.bpp = 4;
     _CustomData.width = 0;
     _CustomData.height = 0;
-    _CustomData.busy = false;
-    _CustomData.ImageData = NULL;
 }
 
 void TcamImage::set_capture_format(std::string format, FrameSize size, FrameRate framerate)
@@ -25,7 +23,7 @@ void TcamImage::set_capture_format(std::string format, FrameSize size, FrameRate
 
     _CustomData.width = size.width;
     _CustomData.height = size.height;
-   _CustomData.ImageData = new unsigned char[size.width * size.width * _CustomData.bpp];
+    _CustomData.image_data.resize( size.width * size.width * _CustomData.bpp );
 
     TcamCamera::set_capture_format(format, size, framerate);
 }
@@ -55,13 +53,12 @@ GstFlowReturn TcamImage::new_frame_cb(GstAppSink *appsink, gpointer data)
     CUSTOMDATA *pCustomData = (CUSTOMDATA*)data;
     if( !pCustomData->SaveNextImage)
         return GST_FLOW_OK;
-    pCustomData->SaveNextImage = false;
-
     std::lock_guard<std::mutex> lck(pCustomData->mtx);
 
+    pCustomData->SaveNextImage = false;
     pCustomData->ImageCounter++;
 
-    // The following lines demonstrate, how to acces the image
+    // The following lines demonstrate, how to access the image
     // data in the GstSample.
     GstSample *sample = gst_app_sink_pull_sample(appsink);
 
@@ -74,7 +71,7 @@ GstFlowReturn TcamImage::new_frame_cb(GstAppSink *appsink, gpointer data)
     if (info.data != NULL) 
     {
         // info.data contains the image data as blob of unsigned char 
-        memcpy( pCustomData->ImageData, info.data, pCustomData->width * pCustomData->height * pCustomData->bpp);
+        memcpy( pCustomData->image_data.data(), info.data, pCustomData->width * pCustomData->height * pCustomData->bpp);
     }
     
     // Calling Unref is important!
