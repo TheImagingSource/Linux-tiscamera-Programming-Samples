@@ -1,5 +1,11 @@
-# Auto Focus On Push in Pyhton
-This sample shows how to control the lens of an auto focus camera, e.g. DFK AFU420-L62, DFK Z12GP013 or DFK AFUJ006.
+# Auto Focus On Push in Python
+This sample shows how to control the lens of an auto focus camera, e.g. 
+* DFK AFU420-L62
+* DFK Z12GP013 
+* DFK AFUJ006.
+* DxK AFUX178-M12
+* DxK 72AUC02-F
+* and many more.
 
 The cameras have different capabilities, so the USB cameras have no zoom lens, but the sample shows also, how to use the zoom of GigE cameras.
 
@@ -84,7 +90,7 @@ Tis.Start_pipeline()
 The main loop can be started. It implements the main menu.
 
 ### Auto Focus
-The cameras do not have a permanent auto focus, because the sharpness is estimated on an image. Then the a new focus value is set and the sharpness of the next image is compared with the previous one. This repeats, until a good result is achieved. 
+The cameras do not have a permanent auto focus, because the sharpness is estimated on an image. Then the a new focus value is set and the sharpness of the next image is compared with the previous one. This repeats, until a sharp image is achieved. 
 Running the auto focus on push is simple. Only a True must be set to the "Focus auto" property:
 ``` Python
 Tis.Set_Property("Focus Auto", True)
