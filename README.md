@@ -10,6 +10,9 @@ This Python sample shows how to turn a camera into trigger mode for software tri
 ### Auto Focus On Push in Python
 [This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/Auto%20Focus%20On%20Push%20in%20Python#auto-focus-on-push-in-pyhton) shows, how to control the auto focus and focus of cameras, that support that, e.g. DFK AFUJ003, DFK Z12GP031. Additionally it is shown, how to set the zoom of the GigE zoom cameras.
 
+### Simple Snap Image in C++
+[This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/Simple%20Snap%20Image%20in%20C%2B%2B#simple-snap-image-c) sample shows, how to configure a camera and snap an image from the live stream with only a few lines of C++ code. The snapped image data is converted to an OpenCV cv::Mat for saving as JPEG.
+
 ### Using Properties in C++
 [This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/Using%20Properties%20in%20C%2B%2B#using-properties-in-c) example shows, how to use camera properties, here exposure and gain, in C++ using the [TcamCamera](https://github.com/TheImagingSource/tiscamera/tree/master/examples/cpp/common) class.
 
