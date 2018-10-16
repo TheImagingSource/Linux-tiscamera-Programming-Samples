@@ -1,5 +1,5 @@
 # Auto Focus On Push in Python
-This sample shows how to control the lens of an auto focus camera, e.g. 
+This sample shows how to control the lens of a The Imaging Source auto focus camera, e.g. 
 * DFK AFU420-L62
 * DFK Z12GP013 
 * DFK AFUJ006.
