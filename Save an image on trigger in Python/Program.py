@@ -44,7 +44,7 @@ def on_new_image(tis, userdata):
 # If color is False, then monochrome / bw format is in memory. If color is True, then RGB32
 # colorformat is in memory
 
-Tis = TIS.TIS("48610605", 1920, 1080, 15, True)
+Tis = TIS.TIS("28510360", 2592, 1944, 15, True)
 
 Tis.Set_Image_Callback(on_new_image, CD)
 
@@ -89,12 +89,13 @@ if Tis.Get_Property("Exposure Auto").value :
         Tis.Set_Property("Exposure Auto", False)
         print("Exposure Auto now : %s " % Tis.Get_Property("Exposure Auto").value)
 
-Tis.Set_Property("Exposure", 3000)
-
+Tis.Set_Property("Exposure", 24000)
 
 error = 0
 print('Press Esc to stop')
 lastkey = 0
+cv2.namedWindow('Window',cv2.WINDOW_NORMAL)
+
 cv2.namedWindow('Window')
 
 try:
@@ -110,13 +111,15 @@ try:
 
                 # Check, whether there is a new image and handle it.
                 if CD.newImageReceived is True:
-                        CD.newImageRecevied = False
+                        CD.newImageReceived = False
                         cv2.imshow('Window', CD.image)
                 else:
                         print("No image received")
 
                 lastkey = cv2.waitKey(10)
 
+except KeyboardInterrupt:
+        cv2.destroyWindow('Window')
 except KeyboardInterrupt:
         cv2.destroyWindow('Window')
 

@@ -159,7 +159,7 @@ class TIS:
         try:
             return CameraProperty(*self.source.get_tcam_property(PropertyName))
         except GLib.Error as error:
-            print("Error get Property {0}: {1}",PropertyName, format(err))
+            print("Error get Property {0}: {1}",PropertyName, format(error))
             raise
 
     def Set_Property(self, PropertyName, value):
