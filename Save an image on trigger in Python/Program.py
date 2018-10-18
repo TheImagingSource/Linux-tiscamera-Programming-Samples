@@ -96,8 +96,6 @@ print('Press Esc to stop')
 lastkey = 0
 cv2.namedWindow('Window',cv2.WINDOW_NORMAL)
 
-cv2.namedWindow('Window')
-
 try:
         while lastkey != 27 and error < 5:
                 time.sleep(1)
@@ -118,8 +116,6 @@ try:
 
                 lastkey = cv2.waitKey(10)
 
-except KeyboardInterrupt:
-        cv2.destroyWindow('Window')
 except KeyboardInterrupt:
         cv2.destroyWindow('Window')
 
