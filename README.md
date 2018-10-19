@@ -4,6 +4,9 @@ Programming samples in Pyhton and C++ for the tiscamera GStreamer modules.
 ### Snap an Image and Convert to OpenCV
 [This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/Snap%20an%20Image%20and%20convert%20to%20OpenCV%20in%20Python#snap-an-image-and-convert-to-opencv) sample shows, how to snap an image from the video stream and make some OpenCV image processing on it. The result is displayed in an OpenCV window.
 
+### Using external trigger and a callback in Python
+[This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples#linux-tiscamera-programming-samples) sample shows, how to use an externally triggered camera and process and save a received image in an image callback.
+
 ### Save an image on trigger in Python
 This Python sample shows how to turn a camera into trigger mode for software trigger or hardware trigger and use a callback for receiving the triggered image. 
 
