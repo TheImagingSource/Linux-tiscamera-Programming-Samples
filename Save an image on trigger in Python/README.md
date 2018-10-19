@@ -1,5 +1,11 @@
-# Save an image on trigger
+# Save an image on  software trigger
 This sample shows how to capture from a triggered camera.
+The main purpose of this sample is to use the camera's software trigger for snapping an image. The advantage is, that while no software trigger occurs, the camera does not send images, so there is no USB or GigE data transfer and also there is no CPU load for an ongoing image stream. 
+
+This kind of using the software trigger makes it possible to use many cameras in sequence in a more or less fast way even on weak hardware.
+
+As for all trigger applications, it is recommended to disable the automatics, because the react unexpected, if there are long pauses between two triggers.
+
 
 Programming language: Python
 
