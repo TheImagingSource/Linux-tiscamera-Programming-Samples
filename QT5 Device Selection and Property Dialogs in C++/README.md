@@ -3,13 +3,16 @@ This sample contains a QT5 basic program and reusable dialogs for selecting devi
 It can be used as start frame work or the source codes of the dialogs can be used in own C++ programs
 
 The main window:
+
 ![Main Window](./qt5-dialogs.png)
 
 The device selection dialog:
+
 ![Device Selection](./deviceselection.png)
 
 The properties dialog:
 ![Device Selection](./properties.png)
+
 The property dialog is build dynamically on the available device properties.
 
 Programming language : C++
