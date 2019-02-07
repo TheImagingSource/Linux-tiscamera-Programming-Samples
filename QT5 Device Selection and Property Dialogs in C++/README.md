@@ -11,6 +11,7 @@ The device selection dialog:
 ![Device Selection](./deviceselection.png)
 
 The properties dialog:
+
 ![Device Selection](./properties.png)
 
 The property dialog is build dynamically on the available device properties.
