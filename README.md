@@ -28,5 +28,7 @@ This Python sample shows how to turn a camera into trigger mode for software tri
 ### Stream over Network to VLC
 [This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/Stream%20over%20Network%20to%20VLC#stream-over-network-to-vlc) article shows, how to setup a GStreamer pipeline for sending video stream to VLC over a network.
 
+### IC Barcode simple
+[This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/IC%20Barcode%20Simple) sample shows, how to use the IC Barcode library.
 ## The Imaging Source Camera and Devices FAQ
 The FAQ can be found at https://github.com/TheImagingSource/IC-Imaging-Control-Samples/wiki
