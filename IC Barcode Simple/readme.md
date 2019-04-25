@@ -15,7 +15,7 @@ In order to build the sample, open a terminal, enter the sample's directory. The
 make
 ./ic-barcode-cli barcode.bmp
 ```
-##Source Code main.cpp
+## Source Code main.cpp
 The stb_image - v2.22 library is used for loading the passed image file. It returns a colored image, which will be converted to gray scale, because ic-barcode handles gray scale images only:
 
 ```C++
