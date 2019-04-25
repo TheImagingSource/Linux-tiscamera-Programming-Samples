@@ -7,6 +7,8 @@ The ic-barcode dev package can be downloaded from [IC-Barcode](https://www.theim
 
 Programming language : C++
 
+gcc 6 or higher is required. If you use Ubuntu 16.04, you check with gcc --version the gcc version. If it is below 6, please follow the instructions at  https://askubuntu.com/questions/781972/how-can-i-update-gcc-5-3-to-6-1".
+
 ## Building
 In order to build the sample, open a terminal, enter the sample's directory. Then enter
 ```
@@ -90,6 +92,7 @@ If `count` is greater than 0, then barcodes were found and are printed:
 		printf("No barcode found in %s\n", file_path.c_str());
 	}
 ```
+If `count` is lower than 0, then an error occurred. Please check, whether a The Imaging Source camera is connected to the computer or network and the tiscamera repository from  https://github.com/TheImagingSource/tiscamera has been built and installed.
 
 At program's end, the barcode handle should be cleaned up:
 ```C++

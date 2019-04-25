@@ -97,6 +97,22 @@ int main(int argc, char*argv[])
 									  buffer.data(),
 									  width, height, width,
 									  foundBarcodes.data(), foundBarcodes.size());
+
+	/* If count is lower the 0, then an error occured. Usually it is the 
+		license error, which means the tiscamera modules are not built and 
+		installed or no The Imaging Source camera is connected.
+		The cameras work like a dongle.
+	*/
+	if( count < 0 )
+	{
+		printf("No license.\n");
+		printf("- Is a The Imaging Source camera connected?\n");
+		printf("- Is a tiscamera repository built and installed?\n");
+		printf("  Please refer to https://github.com/TheImagingSource/tiscamera\n");
+
+		return 1;
+	}
+
 	if (count > 0)
 	{
 		// Some barcodes are found, lets print them out.
