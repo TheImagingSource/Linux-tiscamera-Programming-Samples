@@ -11,6 +11,15 @@ TcamImage::TcamImage(std::string serial) : TcamCamera(serial)
     _CustomData.bpp = 4;
     _CustomData.width = 0;
     _CustomData.height = 0;
+    _CustomData.image_data = NULL;
+}
+
+TcamImage::~TcamImage()
+{
+    if(_CustomData.image_data != NULL)
+    {
+        delete _CustomData.image_data;
+    }
 }
 
 void TcamImage::set_capture_format(std::string format, FrameSize size, FrameRate framerate)
@@ -23,7 +32,7 @@ void TcamImage::set_capture_format(std::string format, FrameSize size, FrameRate
 
     _CustomData.width = size.width;
     _CustomData.height = size.height;
-    _CustomData.image_data.resize( size.width * size.width * _CustomData.bpp );
+    //_CustomData.image_data.resize( size.width * size.width * _CustomData.bpp );
 
     TcamCamera::set_capture_format(format, size, framerate);
 }
@@ -32,6 +41,11 @@ bool TcamImage::start()
 {
     // Register a callback to be called for each new frame
     set_new_frame_callback(new_frame_cb, &_CustomData);
+    if(_CustomData.image_data != NULL)
+    {
+        delete _CustomData.image_data;
+    }
+    _CustomData.image_data = new unsigned char[getImageDataSize()] ;
     TcamCamera::start();
 }
 
@@ -71,7 +85,8 @@ GstFlowReturn TcamImage::new_frame_cb(GstAppSink *appsink, gpointer data)
     if (info.data != NULL) 
     {
         // info.data contains the image data as blob of unsigned char 
-        memcpy( pCustomData->image_data.data(), info.data, pCustomData->width * pCustomData->height * pCustomData->bpp);
+        memcpy( pCustomData->image_data, info.data, pCustomData->width * pCustomData->height * pCustomData->bpp);
+        //memcpy( pCustomData->image_data.data(), info.data, pCustomData->width * pCustomData->height * pCustomData->bpp);
     }
     
     // Calling Unref is important!

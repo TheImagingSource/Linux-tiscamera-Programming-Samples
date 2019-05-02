@@ -4,20 +4,6 @@ The used properties are exposure and gain. (Because if exposure auto is off and 
 
 Programming language : C++
 
-## Prerequisits
-The sample uses the the examples/cpp/common/tcamcamera.cpp and .h files of the *tiscamera* repository as wrapper around the
-[GStreamer](https://gstreamer.freedesktop.org/) code and property handling. Adapt the CMakeList.txt accordingly. Open the CMakeLists.txt with your prefered text editor and change the line
-```
-set( TISCAMERA_DIR /home/bvtest/projects/tiscamera-1.0) 
-```
-to
-```
-set( TISCAMERA_DIR <insert the tiscamera path here>) 
-```
-For example
-```
-set( TISCAMERA_DIR /home/John/tiscamera) 
-```
 ## Building
 In order to build the sample, open a terminal, enter the sample's directory. Then enter
 ```

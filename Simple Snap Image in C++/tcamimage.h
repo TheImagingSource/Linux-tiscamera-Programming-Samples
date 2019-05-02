@@ -11,6 +11,7 @@ class TcamImage : public gsttcam::TcamCamera
 {
     public:
         TcamImage(std::string serial = "");
+        ~TcamImage();
         void set_capture_format(std::string format, gsttcam::FrameSize size, gsttcam::FrameRate framerate);
         bool start();
         bool snapImage(int timeout_ms);
@@ -28,11 +29,13 @@ class TcamImage : public gsttcam::TcamCamera
         }
         unsigned char* getImageData()
         {
-            return _CustomData.image_data.data();
+            return _CustomData.image_data;
+            //return _CustomData.image_data.data();
         }
         int getImageDataSize()
         {
-            return _CustomData.image_data.size();
+            return _CustomData.width * _CustomData.height *_CustomData.bpp;
+            //return _CustomData.image_data.size();
         }
 
     private:
@@ -43,8 +46,9 @@ class TcamImage : public gsttcam::TcamCamera
             std::mutex mtx;
             std::condition_variable con;
 
-            std::vector<uint8_t> image_data;
+            //std::vector<uint8_t> image_data;
 
+            unsigned char* image_data;
             int width;
             int height;
             int bpp;

@@ -49,7 +49,7 @@ int main(int argc, char **argv)
 
     // Initialize our TcamCamera object "cam" with the serial number
     // of the camera, which is to be used in this program.
-    TcamCamera cam("48610605");
+    TcamCamera cam("42719953");
     //TcamCamera cam("00001234");
     
     // Set a color video format, resolution and frame rate
@@ -78,7 +78,7 @@ int main(int argc, char **argv)
 
     try
     {
-        ExposureValue = cam.get_property("Exposure");
+        ExposureValue = cam.get_property("Exposure Time (us)");
     }
     catch(std::exception &ex)    
     {

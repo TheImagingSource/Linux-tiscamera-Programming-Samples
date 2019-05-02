@@ -112,8 +112,7 @@ int main(int argc, char **argv)
     printf("Tcam OpenCV Image Sample\n");
 
     // Open camera by serial number
-    TcamCamera cam("10610452");
-    
+    TcamCamera cam("427119953");
     
     // Set video format, resolution and frame rate
     cam.set_capture_format("BGRx", FrameSize{640,480}, FrameRate{30,1});

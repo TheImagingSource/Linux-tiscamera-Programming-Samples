@@ -27,11 +27,12 @@ int main(int argc, char **argv)
     cv::Mat OpenCVImage;
     // Initialize our TcamCamera object "cam" with the serial number
     // of the camera, which is to be used in this program.
-    TcamImage cam("48610605");
+    TcamImage cam("42719953");
     //TcamCamera cam("00001234");
     
     // Set a color video format, resolution and frame rate
     cam.set_capture_format("BGRx", FrameSize{640,480}, FrameRate{30,1});
+
 
     // Comment following line, if no live video display is wanted.
     cam.enable_video_display(gst_element_factory_make("ximagesink", NULL));
