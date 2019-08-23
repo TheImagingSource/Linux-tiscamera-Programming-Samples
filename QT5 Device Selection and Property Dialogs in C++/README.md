@@ -47,13 +47,13 @@ Also QT5 for C++ must be installed
 ## Building
 In order to build the sample, open a terminal, enter the sample's directory. Then enter
 ```
+cd qt5-camera-dialogs
 mkdir build
 cd build 
 cmake ..
 make
 ./qt-dialogs
 ```
-
 
 
 ## Code Documentation

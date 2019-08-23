@@ -161,13 +161,17 @@ void CPropertiesDialog::SetCamera(TcamProp *_ptcambin )
 
 			QVBoxLayout *LayoutToAdd = NULL;
 			if(  g_value_get_string(&pv._group)!= NULL && strcmp( g_value_get_string(&pv._group), "" ) != 0 )
-				LayoutToAdd = findLayoutToAdd(g_value_get_string(&pv._group));
+			{
+				if( strcmp((const char*)(p->data), "Exposure Time (us)") == 0 )
+					LayoutToAdd = findLayoutToAdd("Exposure"); // Workround for this property having "unknown" instead of exposure.
+				else
+					LayoutToAdd = findLayoutToAdd(g_value_get_string(&pv._group));
+			}
 			else		  
 				if( strcmp( g_value_get_string(&pv._category), "" ) == 0 )
 					LayoutToAdd = findLayoutToAdd("Focus"); // Workround for Focus properties having no category.
 				else
 					LayoutToAdd = findLayoutToAdd(g_value_get_string(&pv._category));
-	  
 
 			
 			CPropertyControl *pSld = NULL;
@@ -316,6 +320,7 @@ CPropertyCtrl_int::CPropertyCtrl_int( const char* name,TcamProp *pTcamProp, Prop
 	QHBoxLayout *hl = new QHBoxLayout;
 
 	if( strcmp(name,"Exposure") == 0  ||
+		strcmp(name,"Exposure Time (us)") == 0 ||
 		strcmp(name,"Exposure Auto Lower Limit") == 0 ||
 		strcmp(name,"Exposure Auto Upper Limit") == 0 ||
 		strcmp(name,"Exposure Min") == 0 ||
