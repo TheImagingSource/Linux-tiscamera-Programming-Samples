@@ -30,5 +30,11 @@ This Python sample shows how to turn a camera into trigger mode for software tri
 
 ### IC Barcode simple
 [This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/IC%20Barcode%20Simple) sample shows, how to use the IC Barcode library.
+
+### IC Barcode Wrapper for ROS
+Mr Dominik made a wrapper for ROS using the IC Barcode at [IC Barcode Scanner ROS](https://github.com/fkie/ic_barcode_scanner).
+
 ## The Imaging Source Camera and Devices FAQ
 The FAQ can be found at https://github.com/TheImagingSource/IC-Imaging-Control-Samples/wiki
+
+
