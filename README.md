@@ -25,6 +25,9 @@ This Python sample shows how to turn a camera into trigger mode for software tri
 ### QT5 Device Selection and Property Dialogs in C++
 [This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/QT5%20Device%20Selection%20and%20Property%20Dialogs%20in%20C%2B%2B) sample provides C++ source code for QT5 Device Selection and Camera properties dialogs. It shows in a simple QT5 application, how to use them. It shows also, how to display the live video in a QT5 wigdet.
 
+### Gtk, Glade and OpenCV
+[This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/Use%20GtK%20Glade%20Dand%20OpenCV) C++ sample shows, how to use Gtk, Glade, OpenCV and Gstreamer in one project.
+
 ### Stream over Network to VLC
 [This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/Stream%20over%20Network%20to%20VLC#stream-over-network-to-vlc) article shows, how to setup a GStreamer pipeline for sending video stream to VLC over a network.
 
