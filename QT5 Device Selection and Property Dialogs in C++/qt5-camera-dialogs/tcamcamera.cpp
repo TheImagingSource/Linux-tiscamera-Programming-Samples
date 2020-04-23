@@ -401,8 +401,8 @@ TcamCamera::initialize_format_list()
                 assert(min && max);
                 fmt.framerate_min.numerator = gst_value_get_fraction_numerator(min);
                 fmt.framerate_min.denominator = gst_value_get_fraction_denominator(min);
-                fmt.framerate_min.numerator = gst_value_get_fraction_numerator(min);
-                fmt.framerate_min.denominator = gst_value_get_fraction_denominator(min);
+                fmt.framerate_max.numerator = gst_value_get_fraction_numerator(max);
+                fmt.framerate_max.denominator = gst_value_get_fraction_denominator(max);
             }
             else
             {
