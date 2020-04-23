@@ -9,6 +9,7 @@
 
 #include <iostream>
 
+#include <QDebug>
 #include <assert.h>
 
 using namespace gsttcam;
@@ -297,7 +298,10 @@ TcamCamera::create_pipeline()
 
     gst_bin_add_many(GST_BIN(pipeline_),
                      tcambin_, capturecapsfilter_, tee_, queue, capturesink_, nullptr);
-    assert(gst_element_link_many(tcambin_, capturecapsfilter_, tee_, queue, capturesink_, nullptr));
+    const auto ret = gst_element_link_many(tcambin_, capturecapsfilter_, tee_, queue, capturesink_, nullptr);
+    assert(ret);
+    if (!ret)
+        qCritical() << "Unable to link pipeline";
 }
 
 void
