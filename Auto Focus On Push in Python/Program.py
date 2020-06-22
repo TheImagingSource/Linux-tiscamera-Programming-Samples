@@ -1,3 +1,7 @@
+# Add path to python-common/TIS.py to the import path
+import sys
+sys.path.append("../python-common")
+
 import TIS
 
 # This sample shows, how to control the focus and, if availabe the zoom
@@ -22,7 +26,7 @@ Tis.Start_pipeline()  # Start the pipeline so the camera streams
 
 
 while True:
-        key = raw_input("f : Auto Focus\nf+ : increase focus\nf- : decrease focus\nz+ : increase zoom\n"
+        key = input("f : Auto Focus\nf+ : increase focus\nf- : decrease focus\nz+ : increase zoom\n"
                         "z- : decrease zoom\nq : quit\nPlease enter:")
         if key == "f":
                 Tis.Set_Property("Focus Auto", True)
