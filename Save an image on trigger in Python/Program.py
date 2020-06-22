@@ -1,3 +1,8 @@
+
+# Add path to python-common/TIS.py to the import path
+import sys
+sys.path.append("../python-common")
+
 import cv2
 import numpy as np
 import os
@@ -39,13 +44,16 @@ def on_new_image(tis, userdata):
         userdata.image = tis.Get_image()
         userdata.busy = False
 
-# Open camera, set video format, framerate and determine, whether the sink is color or bw
-# Parameters: Serialnumber, width, height, framerate (numerator only) , color
-# If color is False, then monochrome / bw format is in memory. If color is True, then RGB32
-# colorformat is in memory
+Tis = TIS.TIS()
 
-Tis = TIS.TIS("28510360", 2592, 1944, 15, True)
+# The following line opens and configures the video capture device.
+# Tis.openDevice("41910044", 640, 480, "30/1",TIS.SinkFormats.BGRA, True)
 
+# The next line is for selecting a device, video format and frame rate.
+if not Tis.selectDevice():
+        quit(0)
+
+#Tis.List_Properties()
 Tis.Set_Image_Callback(on_new_image, CD)
 
 # Tis.Set_Property("Trigger Mode", "Off") # Use this line for GigE cameras

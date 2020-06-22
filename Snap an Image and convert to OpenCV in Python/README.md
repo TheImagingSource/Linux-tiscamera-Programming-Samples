@@ -13,12 +13,17 @@ In this file the "TIS" class is implemented, which is a wrapper around the GStre
 ### Program.py
 This is the main file of the sample. The code is
 ``` Python
+import sys
+sys.path.append("../python-common")
 import cv2
 import numpy as np
 import TIS
 
-Tis = TIS.TIS("10710286", 640, 480, 30, True)
-
+Tis = TIS.TIS()
+# The next line is for selecting a device, video format and frame rate.
+if not Tis.selectDevice():
+        quit(0)
+        
 Tis.Start_pipeline()  # Start the pipeline so the camera streams
 
 print('Press Esc to stop')

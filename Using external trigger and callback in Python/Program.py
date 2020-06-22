@@ -1,3 +1,6 @@
+import sys
+sys.path.append("../python-common")
+
 import cv2 as cv2
 import numpy as np
 import os
@@ -50,13 +53,13 @@ def on_new_image(tis, userdata):
         userdata.busy = False
 
 
-# Open camera, set video format, framerate and determine, whether the sink is color or bw
-# Parameters: Serialnumber, width, height, framerate (numerator only) , color
-# If color is False, then monochrome / bw format is in memory. If color is True, then RGB32
-# colorformat is in memory. The last True lets the TIS class open a window for displaying the 
-# live video.
+Tis = TIS.TIS()
+# The following line opens and configures the video capture device.
+#Tis.openDevice("00001234", 640, 480, "30/1",TIS.SinkFormats.BGRA, True)
 
-Tis = TIS.TIS("28210384", 640, 480, 15, True, True)
+# The next line is for selecting a device, video format and frame rate.
+if not Tis.selectDevice():
+        quit(0)
 
 # Create an instance of the CustomData class
 CD = CustomData()
@@ -98,7 +101,7 @@ Tis.Set_Property("Exposure", 24000)
 
 # The main loop does nothing, except waiting for an end.
 while True:
-        key = raw_input("q : quit\nPlease enter:")
+        key = input("q : quit\nPlease enter:")
         if key == "q":
                 break
 

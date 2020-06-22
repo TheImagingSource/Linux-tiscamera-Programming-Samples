@@ -20,13 +20,13 @@ In this file the "TIS" class is implemented, which is a wrapper around the GStre
 This is the main file of the sample.
 
 ## Basics of TIS class
-In the constructur of TIS a camera is opened. Therefore, the serial number, width and height of the video format and the frame rate is passed. The last parameter determines, whether the image will be colored or gray scale.
+The device selection is done as follows:
 
 ``` Python
-Tis = TIS.TIS("48610605", 1920, 1080, 15, True)
+if not Tis.selectDevice():
+        quit(0)
 ``` 
 
-Exchange "48610605" by the serial numbers of your camera. The program "tcam-ctrl -c <serialnumber>" lists the available video formats and their frame rates. This sample line will use 1920x1080 with 15 frames per second colored.
 After TIS constrcution the live video can be started
 ``` Python
 Tis.Start_pipeline()

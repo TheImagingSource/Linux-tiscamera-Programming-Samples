@@ -1,24 +1,60 @@
-import numpy
-import gi
 import time
-
 from collections import namedtuple
+
+import gi
+import re
+import numpy
+from enum import Enum
+from gi.repository import GLib, GObject, Gst, Tcam
 
 gi.require_version("Gst", "1.0")
 gi.require_version("Tcam", "0.1")
 
-from gi.repository import Tcam, Gst, GLib, GObject
 
 
 DeviceInfo = namedtuple("DeviceInfo", "status name identifier connection_type")
 CameraProperty = namedtuple("CameraProperty", "status value min max default step type flags category group")
 
+class SinkFormats(Enum):
+    GRAY8 = 0
+    GRAY16_LE = 1
+    BGRA = 2
+
+    def toString(pf):
+        if( pf == SinkFormats.GRAY16_LE ):
+            return "GRAY16_LE"
+
+        if( pf == SinkFormats.GRAY8 ):
+            return "GRAY8"
+
+        if( pf == SinkFormats.BGRA ):
+            return "BGRA"
+
+        return "BGRA"
 
 class TIS:
     'The Imaging Source Camera'
 
-    def __init__(self,serial, width, height, framerate, color, showvideo):
+    def __init__(self):
         ''' Constructor
+        :return: none
+        '''
+        Gst.init([])
+        self.serialnumber = ""
+        self.height = 0
+        self.width = 0
+        self.framerate="15/1"
+        self.livedisplay = True
+        self.sinkformat = SinkFormats.BGRA
+        self.sample = None
+        self.samplelocked = False
+        self.newsample = False
+        self.img_mat = None
+        self.ImageCallback = None
+        self.pipeline = None
+
+    def openDevice(self,serial, width, height, framerate, sinkformat: SinkFormats, showvideo: bool):
+        ''' Inialize a device, e.g. camera.
         :param serial: Serial number of the camera to be used.
         :param width: Width of the wanted video format
         :param height: Height of the wanted video format
@@ -26,21 +62,21 @@ class TIS:
         :param color: True = 8 bit color, False = 8 bit mono. ToDo: Y16
         :return: none
         '''
-        Gst.init([])
+        self.serialnumber = serial
         self.height = height
         self.width = width
-        self.sample = None
-        self.samplelocked = False
-        self.newsample = False
-        self.img_mat = None
-        self.ImageCallback = None
+        self.framerate = framerate
+        self.sinkformat = sinkformat
+        self.livedisplay = showvideo
+        self._createPipeline()
+        self.source.set_property("serial", self.serialnumber)
 
-        pixelformat = "BGRx"
-        if color is False:
-            pixelformat="GRAY8"
+    def _createPipeline(self):
+        #pixelformat = SinkFormats.toString(self.sinkformat)
 
-        p = 'tcambin serial="%s" name=source ! video/x-raw,format=%s,width=%d,height=%d,framerate=%d/1' % (serial,pixelformat,width,height,framerate,)
-        if showvideo is True:
+        #p = 'tcambin serial="%s" name=source ! video/x-raw,format=%s,width=%d,height=%d,framerate=%s' % (self.serialnumber,pixelformat,self.width,self.height,self.framerate,)
+        p = 'tcambin name=source ! capsfilter name=caps'
+        if self.livedisplay is True:
             p += " ! tee name=t"
             p += " t. ! queue ! videoconvert ! ximagesink"
             p += " t. ! queue ! appsink name=sink"
@@ -51,13 +87,14 @@ class TIS:
         try:
             self.pipeline = Gst.parse_launch(p)
         except GLib.Error as error:
-            print("Error creating pipeline: {0}".format(err))
+            print("Error creating pipeline: {0}".format(error))
             raise
 
         self.pipeline.set_state(Gst.State.READY)
         self.pipeline.get_state(Gst.CLOCK_TIME_NONE)
         # Query a pointer to our source, so we can set properties.
         self.source = self.pipeline.get_by_name("source")
+        self.source.set_property("serial", self.serialnumber)
 
         # Query a pointer to the appsink, so we can assign the callback function.
         self.appsink = self.pipeline.get_by_name("sink")
@@ -65,6 +102,7 @@ class TIS:
         self.appsink.set_property("drop",1)
         self.appsink.set_property("emit-signals",1)
         self.appsink.connect('new-sample', self.on_new_buffer)
+
 
     def on_new_buffer(self, appsink):
         self.newsample = True
@@ -76,17 +114,48 @@ class TIS:
                     self.ImageCallback(self, *self.ImageCallbackData);
 
             except GLib.Error as error:
-                print("Error on_new_buffer pipeline: {0}".format(err))
+                print("Error on_new_buffer pipeline: {0}".format(error))
                 raise
         return False
 
+    def setSinkFormat( self, sf: SinkFormats):
+        self.sinkformat = sf
+
+    def showLive( self, show: bool):
+        self.livedisplay = show
+
+    def _setcaps(self):
+        """ 
+        Set pixel and sink format and frame rate
+        """
+        caps = Gst.Caps.new_empty()
+
+        structure = Gst.Structure.new_from_string("video/x-raw")
+        structure.set_value("format", SinkFormats.toString(self.sinkformat))
+        structure.set_value("width", self.width)
+        structure.set_value("height", self.height)
+        struc_string = structure.to_string()
+        struc_string += ",framerate={}".format(self.framerate)
+        structure.free()
+        structure, end = structure.from_string(struc_string)
+        caps.append_structure(structure)
+
+        structure.free()
+        capsfilter = self.pipeline.get_by_name("caps")
+        capsfilter.set_property("caps", caps)
+
+
     def Start_pipeline(self):
+        """
+        Start the pipeline, so the video runs
+        """
         try:
+            self._setcaps()
             self.pipeline.set_state(Gst.State.PLAYING)
             self.pipeline.get_state(Gst.CLOCK_TIME_NONE)
 
         except GLib.Error as error:
-            print("Error starting pipeline: {0}".format(err))
+            print("Error starting pipeline: {0}".format(error))
             raise
 
     def __convert_sample_to_numpy(self):
@@ -99,27 +168,33 @@ class TIS:
         self.samplelocked = True
         buf = self.sample.get_buffer()
         caps = self.sample.get_caps()
-        bpp = 4;
-        dtype = numpy.uint8
-        bla = caps.get_structure(0).get_value('height')
-        if( caps.get_structure(0).get_value('format') == "BGRx" ):
-            bpp = 4;
+        mem = buf.get_all_memory()
+        success, info = mem.map(Gst.MapFlags.READ)
+        if success:
+            data = info.data
+            mem.unmap(info)
+                
+            bpp = 4
+            dtype = numpy.uint8
+            bla = caps.get_structure(0).get_value('height')
+            if( caps.get_structure(0).get_value('format') == "BGRx" ):
+                bpp = 4
 
-        if(caps.get_structure(0).get_value('format') == "GRAY8" ):
-            bpp = 1;
+            if(caps.get_structure(0).get_value('format') == "GRAY8" ):
+                bpp = 1
 
-        if(caps.get_structure(0).get_value('format') == "GRAY16_LE" ):
-            bpp = 1;
-            dtype = numpy.uint16
+            if(caps.get_structure(0).get_value('format') == "GRAY16_LE" ):
+                bpp = 1
+                dtype = numpy.uint16
 
-        self.img_mat = numpy.ndarray(
-            (caps.get_structure(0).get_value('height'),
-             caps.get_structure(0).get_value('width'),
-             bpp),
-            buffer=buf.extract_dup(0, buf.get_size()),
-            dtype=dtype)
-        self.newsample = False
-        self.samplelocked = False
+            self.img_mat = numpy.ndarray(
+                (caps.get_structure(0).get_value('height'),
+                caps.get_structure(0).get_value('width'),
+                bpp),
+                buffer=data,
+                dtype=dtype)
+            self.newsample = False
+            self.samplelocked = False
 
     def wait_for_image(self,timeout):
         ''' Wait for a new image with timeout
@@ -165,16 +240,194 @@ class TIS:
         try:
             return CameraProperty(*self.source.get_tcam_property(PropertyName))
         except GLib.Error as error:
-            print("Error get Property {0}: {1}",PropertyName, format(err))
+            print("Error get Property {0}: {1}",PropertyName, format(error))
             raise
 
     def Set_Property(self, PropertyName, value):
         try:
             self.source.set_tcam_property(PropertyName,GObject.Value(type(value),value))
         except GLib.Error as error:
-            print("Error set Property {0}: {1}",PropertyName, format(err))
+            print("Error set Property {0}: {1}",PropertyName, format(error))
             raise
 
     def Set_Image_Callback(self, function, *data):
         self.ImageCallback = function
-        self.ImageCallbackData = data;
+        self.ImageCallbackData = data
+
+    def selectDevice(self):
+        ''' Select a camera, its video format and frame rate
+        :return: True on success, False on nothing selected
+        '''
+        source = Gst.ElementFactory.make("tcamsrc")
+        serials = source.get_device_serials()
+
+        i = 0
+        for single_serial in serials:
+            (return_value, model, identifier, connection_type) = source.get_device_info(single_serial)
+
+            # return value would be False when a non-existant serial is used
+            # since we are iterating get_device_serials this should not happen
+            if return_value:
+                i = i + 1
+                print("{} : Model: {} Serial: {} ".format(i, model,single_serial))
+
+        source = None
+
+        if i > 0:
+            i = int(input("Select : "))
+            if i == 0:
+                return False
+
+            self.serialnumber = serials[i-1]
+            return self.selectFormat()
+
+        return False
+
+
+    def selectFormat(self):
+        formats = self.createFormats()
+        i = 0
+        f =[] 
+        for key,value in formats.items():
+            f.append(key)
+            i = i + 1
+            print("{}: {}".format(i, key))
+
+        i = int(input("Select : "))
+        if i == 0:
+            return False
+
+        format = f[i-1] 
+        i = 0
+        for res in formats[format].res_list:
+            i = i + 1
+            print("{}:  {}x{}".format(i, res.width,res.height))
+
+        i = int(input("Select : "))
+        if i == 0:
+            return False
+
+
+        width=formats[format].res_list[i-1].width
+        height =formats[format].res_list[i-1].height
+        o = 0
+        for rate in formats[format].res_list[i].fps :
+            o += 1
+            print("{}:  {}".format(o, rate))
+
+        o = int(input("Select : "))
+        if o == 0:
+            return False
+
+        framerate = formats[format].res_list[i].fps[o-1] 
+        #print(format,width,height,framerate )
+        self.openDevice(self.serialnumber, width, height, framerate, SinkFormats.BGRA, True)
+        return True
+
+
+
+    def createFormats(self):
+        source = Gst.ElementFactory.make("tcambin")
+        source.set_property("serial", self.serialnumber)
+
+        source.set_state(Gst.State.READY)
+
+        caps = source.get_static_pad("src").query_caps()
+        format_dict = {}
+
+        for x in range(caps.get_size()):
+            structure = caps.get_structure(x)
+            name = structure.get_name()
+            try:
+                format = structure.get_value("format")
+
+                if format not in format_dict:
+                    format_dict[format] = FmtDesc(name, format)
+                    
+
+                width = structure.get_value("width")
+                height = structure.get_value("height")       
+
+                rates = self.get_framerates(structure)
+
+                r = []
+                for rate in rates:
+                    r.append(str(rate))
+
+                format_dict[format].res_list.append(ResDesc(width,height,r))        
+
+            except:
+                pass
+
+        source.set_state(Gst.State.NULL)
+        source.set_property("serial", "")
+        source = None
+
+        return format_dict
+
+    def get_framerates(self, fmt):
+        try:
+            rates = fmt.get_value("framerate")
+        except TypeError:
+            # Workaround for missing GstValueList support in GI
+            substr = fmt.to_string()[fmt.to_string().find("framerate="):]
+            # try for frame rate lists
+            field, values, remain = re.split("{|}", substr, maxsplit=3)
+            rates = [x.strip() for x in values.split(",")]
+        return rates
+
+
+class ResDesc:
+    """"""
+    def __init__(self,                 
+                 width: int,
+                 height: int,
+                 fps: list):
+        self.width = width
+        self.height = height
+        self.fps = fps
+
+
+class FmtDesc:
+    """"""
+
+    def __init__(self,
+                 name: str = "",
+                 fmt: str = ""):
+        self.name = name
+        self.fmt = fmt
+        self.res_list = []
+
+    def get_name(self):
+        if self.name == "image/jpeg":
+            return "jpeg"
+        else:
+            return self.fmt
+
+    def get_resolution_list(self):
+
+        res_list = []
+
+        for entry in self.res_list:
+            res_list.append(entry.resolution)
+
+        return res_list
+
+    def get_fps_list(self, resolution: str):
+
+        for entry in self.res_list:
+            if entry.resolution == resolution:
+                return entry.fps
+
+    def generate_caps_string(self, resolution: str, fps: str):
+        if self.name == "image/jpeg":
+            return "{},width={},height={},framerate={}".format(self.name,
+                                                               resolution.split('x')[0],
+                                                               resolution.split('x')[1],
+                                                               fps)
+        else:
+            return "{},format={},width={},height={},framerate={}".format(self.name,
+                                                                         self.fmt,
+                                                                         resolution.split('x')[0],
+                                                                         resolution.split('x')[1],
+                                                                         fps)

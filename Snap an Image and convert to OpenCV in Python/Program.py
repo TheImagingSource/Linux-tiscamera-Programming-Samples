@@ -1,3 +1,6 @@
+import sys
+sys.path.append("../python-common")
+
 import cv2
 import numpy as np
 import TIS
@@ -9,15 +12,14 @@ import TIS
 # tiscamera
 
 
-# Open camera, set video format, framerate and determine, whether the sink is color or bw
-# Parameters: Serialnumber, width, height, framerate (numerator only) , color
-# If color is False, then monochrome / bw format is in memory. If color is True, then RGB32
-# colorformat is in memory
-
-Tis = TIS.TIS("10710286", 640, 480, 30, True)
+Tis = TIS.TIS()
+#Tis.openDevice("10710286", 640, 480, "30/1", TIS.SinkFormats.BGRA,True)
 # the camera with serial number 10710286 uses a 640x480 video format at 30 fps and the image is converted to
 # RGBx, which is similar to RGB32.
 
+# The next line is for selecting a device, video format and frame rate.
+if not Tis.selectDevice():
+        quit(0)
 Tis.Start_pipeline()  # Start the pipeline so the camera streams
 
 print('Press Esc to stop')

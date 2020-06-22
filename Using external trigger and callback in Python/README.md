@@ -66,23 +66,17 @@ The prerequisites for the callback are finished, now the TIS class must get this
 Tis.Set_Image_Callback(on_new_image, CD)
 ```
 ## Opening the Camera
-In the constructur of TIS a camera is opened. 
 
 ``` Python
-Tis = TIS.TIS("28210384", 640, 480, 15, True, True)
+Tis = TIS.TIS()
+# The following line opens and configures the video capture device.
+#Tis.openDevice("00001234", 640, 480, "30/1",TIS.SinkFormats.BGRA, True)
+
+# The next line is for selecting a device, video format and frame rate.
+if not Tis.selectDevice():
+        quit(0)
 ``` 
-| Parameter| Description |
-| --- | --- |
-| Seria lnumber | Serial number of the camera to be used.|
-| Width | Width of the video format |
-| Height | Height of the video format |
-| Framerate | Frame rate. The "/1" is added in the TIS class|
-| Color | If true, the pixel format will be BGRx colored, else GRAY8 gray scale |
-| Show Live| If true, a live video window is shown.|
-
-
-Exchange "28210384" by the serial numbers of your camera. The program "tcam-ctrl -c <serialnumber>" lists the available video formats and their frame rates. This sample line will use 640x480 with 15 frames per second colored.
-After TIS construction the live video can be started
+After a device has been opened the live video can be started
 ``` Python
 Tis.Start_pipeline()
 ``` 

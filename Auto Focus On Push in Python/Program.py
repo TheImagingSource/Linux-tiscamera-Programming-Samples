@@ -10,19 +10,20 @@ import TIS
 # pyhton-gst-1.0
 # tiscamera
 
+Tis = TIS.TIS()
+# The following line opens and configures the video capture device.
+#Tis = Tis.openDevice("00001234", 640, 480, "30/1",TIS.SinkFormats.BGRA, True)
 
-# Open camera, set video format, framerate and determine, whether the sink is color or bw
-# Parameters: Serialnumber, width, height, framerate (numerator only) , color, videowindow
-# If color is False, then monochrome / bw format is in memory. If color is True, then RGB32
-# colorformat is in memory
+# The next line is for selecting a device, video format and frame rate.
+if not Tis.selectDevice():
+        quit(0)
 
-Tis = TIS.TIS("00001234", 640, 480, 30, True, True)
-# the camera with serial number 10710286 uses a 640x480 video format at 30 fps and the image is converted to
-# RGBx, which is similar to RGB32.
+Tis.setSinkFormat(TIS.SinkFormats.BGRA) #Use BGRA format in the Memory
+
 
 Tis.Start_pipeline()  # Start the pipeline so the camera streams
 
-# Tis.List_Properties()  # List available properties
+Tis.List_Properties()  # List available properties
 
 
 while True:
