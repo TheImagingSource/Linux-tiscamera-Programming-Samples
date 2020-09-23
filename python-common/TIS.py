@@ -311,7 +311,7 @@ class TIS:
         width=formats[format].res_list[i-1].width
         height =formats[format].res_list[i-1].height
         o = 0
-        for rate in formats[format].res_list[i].fps :
+        for rate in formats[format].res_list[i-1].fps :
             o += 1
             print("{}:  {}".format(o, rate))
 
@@ -319,7 +319,7 @@ class TIS:
         if o == 0:
             return False
 
-        framerate = formats[format].res_list[i].fps[o-1] 
+        framerate = formats[format].res_list[i-1].fps[o-1] 
         #print(format,width,height,framerate )
         self.openDevice(self.serialnumber, width, height, framerate, SinkFormats.BGRA, True)
         return True
