@@ -48,13 +48,6 @@ print('Program ends')
 ``` 
 
 ## Detailed documentation
-In the constructur of TIS an existing The Imaging Source camera is opened. Therefore, the serial number, width and height of the video format and the frame rate is passed. The last parameter determines, whether the image will be colored or gray scale.
-
-``` Python
-Tis = TIS.TIS("10710286", 640, 480, 30, True)
-``` 
-
-Exchange "10710286" by the serial numbers of your camera. The program "tcam-ctrl -c <serialnumber>" lists the available video formats and their frame rates. This sample line will use 1920x1080 with 15 frames per second colored.
 
 After the TIS class constrcution the live video can be started
 ``` Python
