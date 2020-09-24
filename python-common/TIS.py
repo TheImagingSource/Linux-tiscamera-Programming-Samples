@@ -28,9 +28,9 @@ class SinkFormats(Enum):
             return "GRAY8"
 
         if( pf == SinkFormats.BGRA ):
-            return "BGRA"
+            return "BGRx"
 
-        return "BGRA"
+        return "BGRx"
 
 class TIS:
     'The Imaging Source Camera'
@@ -72,9 +72,6 @@ class TIS:
         self.source.set_property("serial", self.serialnumber)
 
     def _createPipeline(self):
-        #pixelformat = SinkFormats.toString(self.sinkformat)
-
-        #p = 'tcambin serial="%s" name=source ! video/x-raw,format=%s,width=%d,height=%d,framerate=%s' % (self.serialnumber,pixelformat,self.width,self.height,self.framerate,)
         p = 'tcambin name=source ! capsfilter name=caps'
         if self.livedisplay is True:
             p += " ! tee name=t"
@@ -90,11 +87,8 @@ class TIS:
             print("Error creating pipeline: {0}".format(error))
             raise
 
-        self.pipeline.set_state(Gst.State.READY)
-        self.pipeline.get_state(Gst.CLOCK_TIME_NONE)
-        # Query a pointer to our source, so we can set properties.
+        # Quere the source module.
         self.source = self.pipeline.get_by_name("source")
-        self.source.set_property("serial", self.serialnumber)
 
         # Query a pointer to the appsink, so we can assign the callback function.
         self.appsink = self.pipeline.get_by_name("sink")
@@ -129,21 +123,14 @@ class TIS:
         Set pixel and sink format and frame rate
         """
         caps = Gst.Caps.new_empty()
+        format = 'video/x-raw,format=%s,width=%d,height=%d,framerate=%s' % ( SinkFormats.toString(self.sinkformat),self.width,self.height,self.framerate,)
+        structure = Gst.Structure.new_from_string(format)
 
-        structure = Gst.Structure.new_from_string("video/x-raw")
-        structure.set_value("format", SinkFormats.toString(self.sinkformat))
-        structure.set_value("width", self.width)
-        structure.set_value("height", self.height)
-        struc_string = structure.to_string()
-        struc_string += ",framerate={}".format(self.framerate)
-        structure.free()
-        structure, end = structure.from_string(struc_string)
         caps.append_structure(structure)
 
         structure.free()
         capsfilter = self.pipeline.get_by_name("caps")
         capsfilter.set_property("caps", caps)
-
 
     def Start_pipeline(self):
         """
@@ -152,11 +139,15 @@ class TIS:
         try:
             self._setcaps()
             self.pipeline.set_state(Gst.State.PLAYING)
-            self.pipeline.get_state(Gst.CLOCK_TIME_NONE)
+            error = self.pipeline.get_state(5000000000) 
+            if error[1] != Gst.State.PLAYING:
+                print("Error starting pipeline. {0}".format("") )    
+                return False
 
-        except GLib.Error as error:
-            print("Error starting pipeline: {0}".format(error))
+        except: # GError as error:
+            print("Error starting pipeline: {0}".format("unknown too"))
             raise
+        return True
 
     def __convert_sample_to_numpy(self):
         ''' Convert a GStreamer sample to a numpy array
@@ -315,6 +306,7 @@ class TIS:
             o += 1
             print("{}:  {}".format(o, rate))
 
+        framerate = formats[format].res_list[i-1].fps[o-1] 
         o = int(input("Select : "))
         if o == 0:
             return False
