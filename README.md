@@ -1,5 +1,5 @@
 # Linux-tiscamera-Programming-Samples
-Programming samples in Pyhton and C++ for the tiscamera GStreamer modules.
+Programming samples in Python and C++ for the tiscamera GStreamer modules.
 
 ### Snap an Image and Convert to OpenCV
 [This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/Snap%20an%20Image%20and%20convert%20to%20OpenCV%20in%20Python#snap-an-image-and-convert-to-opencv) sample shows, how to snap an image from the video stream and make some OpenCV image processing on it. The result is displayed in an OpenCV window.
