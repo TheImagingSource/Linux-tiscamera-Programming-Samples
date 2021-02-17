@@ -1,0 +1,22 @@
+There are folowing examples available:
+1. Live view
+2. h.264 streaming
+
+***
+1. Live view
+
+This example shows a video from the camera with a Gstreamer pipeline. 
+To run the example, double click on the script or execute it in terminal:
+
+$ ./liveview.sh
+
+***
+2. h.264 streaming
+This example demonstrates how an h.264 encoded stream can be created, and how to receive and decode it on another computer.
+To run the streamimg part of the example double click on the script or execute it in terminal:
+
+$ ./h264streaming.sh
+
+Copy the receiveH264stream.sdp (receiveH265stream.sdp) file to the receiving computer and open the file in a suitable player (e.g. VLC). Make sure the receiving and the sending computer are in the same local network.
+
+Please note that the Raspberry Pi is only capable of hardware encoding an h.264 stream up to 1920x1080 at 30 fps. Therefore, for sensors having a native resolution above 1920x1080 (e.g. IMX335), a dedicated example bash script is provided called 'h264streaming-hi-res-sensors.sh' . It specifically selects full hd resolution for the sensor.
