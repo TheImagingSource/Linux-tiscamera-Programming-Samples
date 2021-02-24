@@ -9,6 +9,7 @@
 
 #include <iostream>
 
+#include <QDebug>
 #include <assert.h>
 
 using namespace gsttcam;
@@ -297,7 +298,10 @@ TcamCamera::create_pipeline()
 
     gst_bin_add_many(GST_BIN(pipeline_),
                      tcambin_, capturecapsfilter_, tee_, queue, capturesink_, nullptr);
-    assert(gst_element_link_many(tcambin_, capturecapsfilter_, tee_, queue, capturesink_, nullptr));
+    const auto ret = gst_element_link_many(tcambin_, capturecapsfilter_, tee_, queue, capturesink_, nullptr);
+    assert(ret);
+    if (!ret)
+        qCritical() << "Unable to link pipeline";
 }
 
 void
@@ -401,8 +405,8 @@ TcamCamera::initialize_format_list()
                 assert(min && max);
                 fmt.framerate_min.numerator = gst_value_get_fraction_numerator(min);
                 fmt.framerate_min.denominator = gst_value_get_fraction_denominator(min);
-                fmt.framerate_min.numerator = gst_value_get_fraction_numerator(min);
-                fmt.framerate_min.denominator = gst_value_get_fraction_denominator(min);
+                fmt.framerate_max.numerator = gst_value_get_fraction_numerator(max);
+                fmt.framerate_max.denominator = gst_value_get_fraction_denominator(max);
             }
             else
             {
