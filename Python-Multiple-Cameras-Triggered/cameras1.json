@@ -1,0 +1,20 @@
+{
+    "cameras":[
+        {
+            "serial": "46610159",
+			"format" : "video/x-raw",
+			"pixelformat" : "BGRx",
+			"width" : 640,
+			"height" : 480,
+            "framerate":"30/1"
+        },
+        {
+            "serial": "41910044",
+			"format" : "video/x-raw",
+			"pixelformat" : "BGRx",
+			"width" : 640,
+			"height" : 480,
+            "framerate":"30/1"       
+        }
+    ]
+}

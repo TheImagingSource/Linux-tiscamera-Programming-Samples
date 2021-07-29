@@ -1,0 +1,66 @@
+{
+    "cameras":[
+        {
+            "serial": "28120175",
+			"format" : "video/x-raw",
+			"pixelformat" : "BGRx",
+			"width" : 640,
+			"height" : 480,
+            "framerate":"30/1",
+            "trigger":
+                {
+                    "property":"Trigger Mode",
+                    "on" : "On",
+                    "off" : "Off"
+                }
+            ,
+            "properties":
+            [
+                {"property":"Brightness",  "value":20},
+                {"property":"Exposure Auto","value":"Off"},
+                {"property":"Exposure", "value":33000},
+                {"property":"Gain Auto", "value":"Off"},
+                {"property":"Gain", "value":0},
+                {"property":"Whitebalance Auto", "value":"Off"},
+                {"property":"Balance Ratio Selector", "value":"Red"},
+                {"property":"Balance Ratio", "value":2.0},
+                {"property":"Balance Ratio Selector", "value":"Blue"},
+                {"property":"Balance Ratio", "value":2.0},
+                {"property":"Balance Ratio Selector", "value":"Green"},
+                {"property":"Balance Ratio", "value":1.0}
+
+            ],
+            "imageprefix" : "left"            
+        },        
+        {
+            "serial": "27710770",
+			"format" : "video/x-raw",
+			"pixelformat" : "BGRx",
+			"width" : 640,
+			"height" : 480,
+            "framerate":"30/1",
+            "trigger":
+                {
+                    "property":"Trigger Mode",
+                    "on" : "On",
+                    "off" : "Off"
+                },
+            "properties":
+            [
+                {"property":"Brightness",  "value":20},
+                {"property":"Exposure Auto","value":"Off"},
+                {"property":"Exposure", "value":33000},
+                {"property":"Gain Auto", "value":"Off"},
+                {"property":"Gain", "value":0},
+                {"property":"Whitebalance Auto", "value":"Off"},
+                {"property":"Balance Ratio Selector", "value":"Red"},
+                {"property":"Balance Ratio", "value":1.0},
+                {"property":"Balance Ratio Selector", "value":"Blue"},
+                {"property":"Balance Ratio", "value":1.0},
+                {"property":"Balance Ratio Selector", "value":"Green"},
+                {"property":"Balance Ratio", "value":1.0}
+            ],
+            "imageprefix" : "right"            
+        }
+    ]
+}
