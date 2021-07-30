@@ -105,7 +105,7 @@ def on_new_image(camera, userdata):
 
 Gst.init([])
 
-with open("cameras.json") as jsonFile:
+with open("cameras3.json") as jsonFile:
     cameraconfigs = json.load(jsonFile)
     jsonFile.close()
 
