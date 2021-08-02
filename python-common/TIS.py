@@ -5,10 +5,11 @@ import gi
 import re
 import numpy
 from enum import Enum
-from gi.repository import GLib, GObject, Gst, Tcam
-
 gi.require_version("Gst", "1.0")
 gi.require_version("Tcam", "0.1")
+
+from gi.repository import GLib, GObject, Gst, Tcam
+
 
 
 
@@ -32,6 +33,16 @@ class SinkFormats(Enum):
 
         return "BGRx"
 
+    def fromString(pf):
+        if( pf == "GRAY16_LE"):
+            return SinkFormats.GRAY16_LE
+        if( pf == "GRAY8"):
+            return SinkFormats.GRAY8
+      
+        return SinkFormats.BGRA
+
+
+
 class TIS:
     'The Imaging Source Camera'
 
@@ -39,7 +50,7 @@ class TIS:
         ''' Constructor
         :return: none
         '''
-        Gst.init([])
+        #Gst.init([])
         self.serialnumber = ""
         self.height = 0
         self.width = 0
@@ -230,14 +241,31 @@ class TIS:
     def Get_Property(self, PropertyName):
         try:
             return CameraProperty(*self.source.get_tcam_property(PropertyName))
-        except GLib.Error as error:
+        except Exception as error:
             print("Error get Property {0}: {1}",PropertyName, format(error))
             raise
 
     def Set_Property(self, PropertyName, value):
         try:
-            self.source.set_tcam_property(PropertyName,GObject.Value(type(value),value))
-        except GLib.Error as error:
+
+            property = self.source.get_tcam_property(PropertyName)
+            if(type(value) is int and property.type == 'double'):
+                value = float(value)
+
+            if(type(value) is float and property.type == 'integer'):
+                value = int(value)
+
+
+            result = self.source.set_tcam_property(PropertyName,GObject.Value(type(value),value))
+            if result is False:
+                print("Failed to set {} to value {}. value type is {} Property type is {}, range is {}-{}".format(
+                    PropertyName, value,
+                    type(value),
+                    property.type,
+                    property.min,
+                    property.max) 
+                    )
+        except Exception as error:
             print("Error set Property {0}: {1}",PropertyName, format(error))
             raise
 
@@ -321,7 +349,7 @@ class TIS:
     def createFormats(self):
         source = Gst.ElementFactory.make("tcambin")
         source.set_property("serial", self.serialnumber)
-
+        
         source.set_state(Gst.State.READY)
 
         caps = source.get_static_pad("src").query_caps()
