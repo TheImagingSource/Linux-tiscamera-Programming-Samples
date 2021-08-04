@@ -24,5 +24,26 @@ cmake ..
 make
 ./tcamopencvsaveimage
 ```
-Please change the serial number in the TcamCamera contructor call in main.cpp main() to your camera's serial number. This is documented below in detail.
+Possible pipelines are
+
+16bit grayscale
+```
+tcambin name=source ! video/x-raw,format=GRAY16_LE,width=640,height=480,framerate=30/1 ! appsink sync=false name=sink
+```
+RGB64
+```
+tcambin name=source ! video/x-raw,format=RGBx64,width=640,height=480,framerate=30/1 ! appsink sync=false name=sink
+```
+
+RGB
+```
+tcambin name=source ! video/x-raw,format=BGR,width=640,height=480,framerate=30/1 ! appsink sync=false name=sink
+```
+
+GRAY8
+```
+tcambin name=source ! video/x-raw,format=BGR,width=640,height=480,framerate=30/1 ! appsink sync=false name=sink
+```
+
+
 
