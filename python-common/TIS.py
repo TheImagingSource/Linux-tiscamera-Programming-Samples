@@ -50,7 +50,7 @@ class TIS:
         ''' Constructor
         :return: none
         '''
-        #Gst.init([])
+        Gst.init([]) # Usually better to call in the main function.
         self.serialnumber = ""
         self.height = 0
         self.width = 0
