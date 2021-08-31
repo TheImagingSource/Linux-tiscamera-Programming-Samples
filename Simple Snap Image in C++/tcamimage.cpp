@@ -1,6 +1,7 @@
 #include "tcamimage.h"
 #include <unistd.h>
 #include <chrono>
+#include <cstring>
 
 using namespace gsttcam;
 
