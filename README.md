@@ -32,7 +32,7 @@ This Python sample shows how to turn a camera into trigger mode for software tri
 [This](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/Stream%20over%20Network%20to%20VLC#stream-over-network-to-vlc) article shows, how to setup a GStreamer pipeline for sending video stream to VLC over a network.
 
 ### Stream into a Web Browser
-[A](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/webserver) Pyhton sample shows, how stream from a camera into a web browser.
+[A](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/webserver) Python sample shows, how stream from a camera into a web browser.
 
 ### tcam-dialog Terminal Program for Camera Property Manipulation
 [A](https://github.com/TheImagingSource/Linux-tiscamera-Programming-Samples/tree/master/tcam-dialog) A terminal program for easy camera property manipulation.
