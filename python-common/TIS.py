@@ -369,14 +369,15 @@ class TIS:
                 height = structure.get_value("height")       
 
                 rates = self.get_framerates(structure)
-
                 r = []
+
                 for rate in rates:
                     r.append(str(rate))
 
                 format_dict[format].res_list.append(ResDesc(width,height,r))        
 
             except:
+                print("Except")
                 pass
 
         source.set_state(Gst.State.NULL)
@@ -387,7 +388,20 @@ class TIS:
 
     def get_framerates(self, fmt):
         try:
-            rates = fmt.get_value("framerate")
+            tmprates = fmt.get_value("framerate")
+            if  type(tmprates) == Gst.FractionRange:
+                # A range is given only, so create a list of frame rate in 10 fps steps:
+                rates = []
+                rates.append("{0}/{1}".format(int(tmprates.start.num),int(tmprates.start.denom)))
+                r = int( (tmprates.start.num + 10) / 10 ) * 10
+                while r < (tmprates.stop.num / tmprates.stop.denom ):
+                    rates.append("{0}/1".format(r))
+                    r += 10
+
+                rates.append("{0}/{1}".format(int(tmprates.stop.num),int(tmprates.stop.denom)))
+            else:
+                rates = tmprates
+
         except TypeError:
             # Workaround for missing GstValueList support in GI
             substr = fmt.to_string()[fmt.to_string().find("framerate="):]
