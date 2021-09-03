@@ -138,8 +138,7 @@ class TIS:
         structure = Gst.Structure.new_from_string(format)
 
         caps.append_structure(structure)
-
-        structure.free()
+        
         capsfilter = self.pipeline.get_by_name("caps")
         capsfilter.set_property("caps", caps)
 
