@@ -169,8 +169,18 @@ class TcamCamera
 			gst_object_unref( pipeline_ );
 			pipeline_ = other.pipeline_;
 			other.pipeline_ = nullptr;
+            return *this;
 		}
 
+        /*
+        * Check, whether the passed serial number exists.
+        */
+        static bool SerialExists(std::string serial);
+
+        /*
+        * Return the serial number of the first found device
+        */
+        static std::string getFirstDeviceSerialNumber();
 
         /*
         * Get a list of all video formats supported by the device

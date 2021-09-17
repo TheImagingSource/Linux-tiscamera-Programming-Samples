@@ -260,10 +260,48 @@ BooleanProperty::set(TcamCamera &cam, int value)
     return ret;
 }
 
+bool TcamCamera::SerialExists(std::string serial)
+{
+    bool result = false;
+    GstElement* tcamsrc = gst_element_factory_make("tcamsrc", nullptr);
+    GSList* serials = tcam_prop_get_device_serials(TCAM_PROP(tcamsrc));
+
+    for (GSList* elem = serials; elem; elem = elem->next)
+    {
+        const char* device_serial = (gchar*)elem->data;
+        if( serial == device_serial)
+        {
+            result = true;
+            break;
+        }
+    }
+
+    g_slist_free_full(serials, g_free);
+    gst_object_unref(tcamsrc);
+    return result;
+}
+
+std::string TcamCamera::getFirstDeviceSerialNumber()
+{
+    std::string foundSerial = "";
+    GstElement* tcamsrc = gst_element_factory_make("tcamsrc", nullptr);
+    GSList* serials = tcam_prop_get_device_serials(TCAM_PROP(tcamsrc));
+    if( serials != NULL)
+    {
+        foundSerial = (gchar*)serials->data;
+    }
+
+    g_slist_free_full(serials, g_free);
+    gst_object_unref(tcamsrc);
+
+    return foundSerial;
+}
+
 TcamCamera::TcamCamera(std::string serial = "")
 {
     if (!gst_is_initialized())
         throw std::runtime_error("GStreamer is not initialized! gst_init(...) needs to be called before using this function.");
+
     create_pipeline();
     if (serial != "")
         g_object_set(tcambin_, "serial", serial.c_str(), nullptr);
@@ -299,7 +337,8 @@ TcamCamera::create_pipeline()
 
     gst_bin_add_many(GST_BIN(pipeline_),
                      tcambin_, capturecapsfilter_, tee_, queue, capturesink_, nullptr);
-    assert(gst_element_link_many(tcambin_, capturecapsfilter_, tee_, queue, capturesink_, nullptr));
+    gboolean ret = gst_element_link_many(tcambin_, capturecapsfilter_, tee_, queue, capturesink_, nullptr);
+    assert(ret);
 }
 
 void
@@ -612,14 +651,21 @@ TcamCamera::enable_video_display(GstElement *displaysink)
 {
     if(displaybin_)
         return;
+
+    assert(displaysink);
     displaybin_ = gst_element_factory_make("bin", nullptr);
     GstElement *queue = gst_element_factory_make("queue", nullptr);
     GstElement *convert = gst_element_factory_make("videoconvert", nullptr);
     GstElement *capsfilter = gst_element_factory_make("capsfilter", nullptr);
+
+    assert( tee_ &&displaybin_&& queue && convert && capsfilter && pipeline_);
+
     gst_bin_add(GST_BIN(pipeline_), displaybin_);
     gst_bin_add_many(GST_BIN(displaybin_), queue, convert, capsfilter, displaysink, nullptr);
+
     if (!gst_element_link_many(tee_, queue, convert, capsfilter, displaysink, nullptr))
-        throw std::runtime_error("Could not link elements");
+        throw std::runtime_error("Could not link elements of display pipeline");
+
 }
 
 void

@@ -108,11 +108,25 @@ int main(int argc, char **argv)
     CustomData.ImageCounter = 0;
     CustomData.SaveNextImage = false;
 
-    
+    // Query the serial number of the first found device. 
+    // will return an emtpy string, if no device was found.
+    std::string serialnumber = TcamCamera::getFirstDeviceSerialNumber();
     printf("Tcam OpenCV Image Sample\n");
+    if( serialnumber != "")
+    {
+        printf( "Found serial number \"%s\".\n", serialnumber.c_str());
+    }
+
+    // Check, whether the passed serial number matches a device.
+    // End program, if the serial number does not exist.
+    if( !TcamCamera::SerialExists( serialnumber ) )
+    {
+        printf("Serial number \"%s\" does not exist.\n", serialnumber.c_str());
+        return 1;
+    }
 
     // Open camera by serial number
-    TcamCamera cam("427119953");
+    TcamCamera cam(serialnumber);
     
     // Set video format, resolution and frame rate
     cam.set_capture_format("BGRx", FrameSize{640,480}, FrameRate{30,1});
