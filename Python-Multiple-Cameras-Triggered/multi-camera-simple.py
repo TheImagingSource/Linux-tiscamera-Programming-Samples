@@ -9,6 +9,8 @@ ended after a key was hit.
 import TIS
 import json
 
+Gst.init([])
+
 with open("cameras1.json") as jsonFile:
     cameraconfigs = json.load(jsonFile)
     jsonFile.close()
