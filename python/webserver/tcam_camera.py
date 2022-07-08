@@ -2,7 +2,7 @@
 import time
 import gi
 gi.require_version("Gst", "1.0")
-gi.require_version("Tcam", "0.1")
+gi.require_version("Tcam", "1.0")
 from gi.repository import GLib, GObject, Gst, Tcam
 
 '''
@@ -27,6 +27,8 @@ class tcam_camera(object):
         self.appsink.set_property("emit-signals",1)
         self.appsink.connect('new-sample', self.on_new_buffer)
         self.pipeline.set_state(Gst.State.PLAYING)
+        self.pipeline.get_state(40000000)
+
         self.image = None
         
     def on_new_buffer(self, appsink):
@@ -49,7 +51,6 @@ class tcam_camera(object):
         :param timeout: wait time in second, should be a float number
         :return:
         '''
-
         tries = 10
         while tries > 0 and not self.newsample:
             tries -= 1

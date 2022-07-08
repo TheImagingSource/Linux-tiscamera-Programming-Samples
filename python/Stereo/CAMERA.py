@@ -1,7 +1,10 @@
-import TIS
 import json
 import time
 import cv2
+import sys
+sys.path.append("../python-common")
+import TIS
+
 
 class CAMERA(TIS.TIS):
     '''
@@ -22,7 +25,7 @@ class CAMERA(TIS.TIS):
     The saveImage method is called from on_new_image() callback, which was passed to the 
     appsink in the pipeline in the TIS.TIS() base class. 
     '''
-    def __init__(self, properties, triggerproperty, imageprefix):
+    def __init__(self, properties, imageprefix):
         '''
         Constructor of the CAMERA class
         :param properties: JSON object, that contains the list of to set properites
@@ -31,10 +34,10 @@ class CAMERA(TIS.TIS):
         '''
         super().__init__()
         self.properties = properties 
-        self.triggerproperty = triggerproperty
         self.imageprefix = imageprefix
         self.busy = False
         self.imageCounter = 0
+
 
     def applyProperties(self):
         '''
@@ -44,20 +47,23 @@ class CAMERA(TIS.TIS):
         Therefore, in order to set properties, that have automatiation
         the automation must be disabeld first, then the value can be set.
         '''
-        for property in self.properties:
-            # print("p: {}  type :{} value:{} ".format( property['property'], type(property['value']), property['value'] ) )
-            self.Set_Property(property['property'], property['value'])
+        for prop in self.properties:
+            try:
+                self.Set_Property(prop['property'],prop['value'])
+            except Exception as error:
+                print(error)
+
 
     def enableTriggerMode(self, onoff):
         '''
         Enable or disable the trigger mode
-
-        :param bool onoff: if true, the trigger mode is enabled, otherwise it is disabled        
+        :param bool onoff: "On" or "Off"
         '''
-        if onoff == True:
-            self.Set_Property(self.triggerproperty['property'], self.triggerproperty['on'])
-        else:
-            self.Set_Property(self.triggerproperty['property'], self.triggerproperty['off'])
+        try:
+            self.Set_Property("TriggerMode", onoff)
+        except Exception as error:
+            print(error)
+
 
     def saveImage(self):
         '''

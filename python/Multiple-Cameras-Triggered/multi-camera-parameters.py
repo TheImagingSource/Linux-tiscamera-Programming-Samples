@@ -10,10 +10,10 @@ are stored in a list.
 After the list has been created, all cameras are started for a live video stream and
 ended after a key was hit.
 '''
-from gi.repository import Gst
-import TIS
 import json
-import time
+import sys
+sys.path.append("../python-common")
+import TIS
 
 class CAMERA(TIS.TIS):
     '''
@@ -27,8 +27,8 @@ class CAMERA(TIS.TIS):
     '''
     def __init__(self, properties):
         super().__init__()
-        self.properties = properties 
-
+        self.properties = properties
+        
     def applyProperties(self):
         '''
         Apply the properties in self.properties to the used camera
@@ -37,11 +37,12 @@ class CAMERA(TIS.TIS):
         Therefore, in order to set properties, that have automatiation
         the automation must be disabeld first, then the value can be set.
         '''
-        for property in self.properties:
-            self.Set_Property(property['property'],property['value'])
+        for prop in self.properties:
+            try:
+                self.Set_Property(prop['property'],prop['value'])
+            except Exception as error:
+                print(error)
 
-
-Gst.init([])
 
 with open("cameras2.json") as jsonFile:
     cameraconfigs = json.load(jsonFile)
@@ -50,20 +51,20 @@ with open("cameras2.json") as jsonFile:
 cameras = list()
 
 for cameraconfig in cameraconfigs['cameras']:
-    print( "Creating camera serial {}".format( cameraconfig['serial']) )
+    print("Creating camera serial {}".format( cameraconfig['serial']))
 
     camera = CAMERA(cameraconfig['properties'])
     
     camera.openDevice(cameraconfig['serial'],
-                                cameraconfig['width'],
-                                cameraconfig['height'],
-                                cameraconfig['framerate'],
-                                TIS.SinkFormats.fromString(cameraconfig['pixelformat']),
-                                True)
+                      cameraconfig['width'],
+                      cameraconfig['height'],
+                      cameraconfig['framerate'],
+                      TIS.SinkFormats.fromString(cameraconfig['pixelformat']),
+                      True)
     cameras.append(camera)
 
 for camera in cameras:
-    camera.Set_Property("Trigger Mode", "Off")
+    camera.Set_Property("TriggerMode", "Off")
     camera.Start_pipeline()
     camera.applyProperties()
 
@@ -71,4 +72,3 @@ key = input("Enter to end program")
 
 for camera in cameras:
     camera.Stop_pipeline()
-

@@ -10,11 +10,14 @@ are stored in a list.
 After the list has been created, all cameras are started for a live video stream and
 ended after a key was hit.
 '''
-from gi.repository import Gst
-import TIS
 import json
 import time
 import cv2
+import sys
+sys.path.append("../python-common")
+import TIS
+#from gi.repository import Gst
+
 
 class CAMERA(TIS.TIS):
     '''
@@ -35,7 +38,7 @@ class CAMERA(TIS.TIS):
     The saveImage method is called from on_new_image() callback, which was passed to the 
     appsink in the pipeline in the TIS.TIS() base class. 
     '''
-    def __init__(self, properties, triggerproperty, imageprefix):
+    def __init__(self, properties, imageprefix):
         '''
         Constructor of the CAMERA class
         :param properties: JSON object, that contains the list of to set properites
@@ -44,7 +47,6 @@ class CAMERA(TIS.TIS):
         '''
         super().__init__()
         self.properties = properties 
-        self.triggerproperty = triggerproperty
         self.imageprefix = imageprefix
         self.busy = False
         self.imageCounter = 0
@@ -57,20 +59,21 @@ class CAMERA(TIS.TIS):
         Therefore, in order to set properties, that have automatiation
         the automation must be disabeld first, then the value can be set.
         '''
-        for property in self.properties:
-            # print("p: {}  type :{} value:{} ".format( property['property'], type(property['value']), property['value'] ) )
-            self.Set_Property(property['property'], property['value'])
+        for prop in self.properties:
+            try:
+                self.Set_Property(prop['property'],prop['value'])
+            except Exception as error:
+                print(error)
 
     def enableTriggerMode(self, onoff):
         '''
         Enable or disable the trigger mode
-
-        :param bool onoff: if true, the trigger mode is enabled, otherwise it is disabled        
+        :param bool onoff: "On" or "Off"
         '''
-        if onoff == True:
-            self.Set_Property(self.triggerproperty['property'], self.triggerproperty['on'])
-        else:
-            self.Set_Property(self.triggerproperty['property'], self.triggerproperty['off'])
+        try:
+            self.Set_Property("TriggerMode", onoff)
+        except Exception as error:
+            print(error)
 
     def saveImage(self):
         '''
@@ -90,7 +93,6 @@ class CAMERA(TIS.TIS):
         self.busy = False
 
 
-
 def on_new_image(camera, userdata):
     '''
     Callback function, which will be called by the TIS class
@@ -102,8 +104,7 @@ def on_new_image(camera, userdata):
     camera.saveImage()
 
 
-
-Gst.init([])
+#Gst.init([])
 
 with open("cameras3.json") as jsonFile:
     cameraconfigs = json.load(jsonFile)
@@ -112,52 +113,29 @@ with open("cameras3.json") as jsonFile:
 cameras = list()
 
 for cameraconfig in cameraconfigs['cameras']:
-    print( "Creating camera serial {}".format( cameraconfig['serial']) )
+    print("Creating camera serial {}".format(cameraconfig['serial']))
 
-    camera = CAMERA(cameraconfig['properties'],cameraconfig['trigger'],cameraconfig['imageprefix'])
+    camera = CAMERA(cameraconfig['properties'], cameraconfig['imageprefix'])
     
     camera.openDevice(cameraconfig['serial'],
-                                cameraconfig['width'],
-                                cameraconfig['height'],
-                                cameraconfig['framerate'],
-                                TIS.SinkFormats.fromString(cameraconfig['pixelformat']),
-                                False)
+                      cameraconfig['width'],
+                      cameraconfig['height'],
+                      cameraconfig['framerate'],
+                      TIS.SinkFormats.fromString(cameraconfig['pixelformat']),
+                      True)
 
     camera.Set_Image_Callback(on_new_image, None)                                
     cameras.append(camera)
 
 for camera in cameras:
-    camera.enableTriggerMode( False )
-    camera.busy = True
-    camera.Start_pipeline()
+    camera.enableTriggerMode("Off")
     camera.applyProperties()
-    camera.enableTriggerMode( True )
-
-
-# Streams have been started.
-# Wait for the pipelines become empty
-time.sleep(0.5)
-
-#Now we can start capture
-# schedulertime = cameras[0].Get_Property("ActionSchedulerTime").value 
-# schedulertime += 2000000
-for camera in cameras:
-    camera.busy = False
-
-    # The following code is for 33G cameras with firmware version 
-    # since 2530. It synchronizes the GigE cameras and "triggers"
-    # them every second. Useful for simulating an external trigger.
-    #
-    #camera.Set_Property("PtpEnable",True)
-    #camera.Set_Property("ActionSchedulerTime",schedulertime)
-    #camera.Set_Property("ActionSchedulerInterval",1000000)
-    #camera.Set_Property("ActionSchedulerCommit",1)
+    camera.Start_pipeline()
+    camera.enableTriggerMode("On")
 
 print("Enter to end program")
 key = input()
 
 for camera in cameras:
-    #camera.Set_Property("ActionSchedulerCancel",1)
-    camera.enableTriggerMode( False )
+    camera.enableTriggerMode("Off")
     camera.Stop_pipeline()
-

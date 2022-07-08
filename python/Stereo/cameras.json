@@ -1,46 +1,32 @@
 {
     "cameras":[
         {
-            "serial": "04619901",
+            "serial": "28910212",
 			"format" : "video/x-raw",
 			"pixelformat" : "GRAY8",
 			"width" : 640,
 			"height" : 480,
             "framerate":"15/1",
-            "trigger":
-                {
-                    "property":"Trigger Mode",
-                    "on" : true,
-                    "off" : false
-                }
-            ,
             "properties":
             [
-                {"property":"Offset Auto Center",  "value":false},
-                {"property":"Offset X",  "value":890},
-                {"property":"Offset Y",  "value":680}
-
+                {"property":"OffsetAutoCenter",  "value":"Off"},
+                {"property":"OffsetX",  "value":890},
+                {"property":"OffsetY",  "value":680}
             ],
             "imageprefix" : "right"            
         },        
         {
-            "serial": "14710502",
+            "serial": "41910044",
 			"format" : "video/x-raw",
 			"pixelformat" : "GRAY8",
 			"width" : 640,
 			"height" : 480,
             "framerate":"15/1",
-            "trigger":
-                {
-                    "property":"Trigger Mode",
-                    "on" : true,
-                    "off" : false
-                },
             "properties":
             [
-                {"property":"Offset Auto Center",  "value":false},
-                {"property":"Offset X",  "value":890},
-                {"property":"Offset Y",  "value":684}
+                {"property":"OffsetAutoCenter",  "value":"Off"},
+                {"property":"OffsetX",  "value":890},
+                {"property":"OffsetY",  "value":684}
             ],
             "imageprefix" : "left"            
         }

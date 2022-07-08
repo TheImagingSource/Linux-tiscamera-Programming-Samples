@@ -6,10 +6,13 @@ are stored in a list.
 After the list has been created, all cameras are started for a live video stream and
 ended after a key was hit.
 '''
-import TIS
-import json
 
-Gst.init([])
+# Add path to python-common/TIS.py to the import path
+import sys
+import json
+sys.path.append("../python-common")
+import TIS
+
 
 with open("cameras1.json") as jsonFile:
     cameraconfigs = json.load(jsonFile)
@@ -18,26 +21,21 @@ with open("cameras1.json") as jsonFile:
 cameras = list()
 
 for cameraconfig in cameraconfigs['cameras']:
-    print( "Creating camera serial {}".format( cameraconfig['serial']) )
+    print("Creating camera serial {}".format( cameraconfig['serial']))
 
     camera = TIS.TIS()
     camera.openDevice(cameraconfig['serial'],
-                                cameraconfig['width'],
-                                cameraconfig['height'],
-                                cameraconfig['framerate'],
-                                TIS.SinkFormats.fromString(cameraconfig['pixelformat']),
-                                True)
+                      cameraconfig['width'],
+                      cameraconfig['height'],
+                      cameraconfig['framerate'],
+                      TIS.SinkFormats.fromString(cameraconfig['pixelformat']),
+                      True)
     cameras.append(camera)
-
 
 for camera in cameras:
     camera.Start_pipeline()
 
-key = input("Enter to end program")
+key = input("Hit Enter key to end program")
 
 for camera in cameras:
     camera.Stop_pipeline()
-
-
-
-
