@@ -37,7 +37,7 @@ void ListProperties(TcamCamera &cam)
     std::cout << "Properties:" << std::endl;
     for(auto &prop : properties)
     {
-        std::cout << prop->to_string() << std::endl;
+        std::cout << prop << std::endl;
     }
 }
 
@@ -102,6 +102,8 @@ GstFlowReturn new_frame_cb(GstAppSink *appsink, gpointer data)
 int main(int argc, char **argv)
 {
     gst_init(&argc, &argv);
+    gst_debug_set_default_threshold(GST_LEVEL_WARNING);
+
     // Declare custom data structure for the callback
     CUSTOMDATA CustomData;
 
@@ -112,6 +114,7 @@ int main(int argc, char **argv)
     // will return an emtpy string, if no device was found.
     std::string serialnumber = TcamCamera::getFirstDeviceSerialNumber();
     printf("Tcam OpenCV Image Sample\n");
+    
     if( serialnumber != "")
     {
         printf( "Found serial number \"%s\".\n", serialnumber.c_str());
@@ -132,32 +135,56 @@ int main(int argc, char **argv)
     cam.set_capture_format("BGRx", FrameSize{640,480}, FrameRate{30,1});
 
     // Comment following line, if no live video display is wanted.
-    cam.enable_video_display(gst_element_factory_make("ximagesink", NULL));
+    GstElement *xi = gst_element_factory_make("ximagesink", NULL);
+    cam.enable_video_display(xi);
 
     // Register a callback to be called for each new frame
     cam.set_new_frame_callback(new_frame_cb, &CustomData);
-    
-    // Start the camera
-    cam.start();
 
     // Uncomment following line, if properties shall be listed. Many of the
-    // properties that are done in software are available after the stream 
+    // properties that are done in software re available after the stream 
     // has started. Focus Auto is one of them.
     // ListProperties(cam);
 
-    for( int i = 0; i< 10; i++)
+    // If some properties are to be set, uncomment the following code part
+    // and set the properties you need to set.
+    /*
+    try
     {
-        CustomData.SaveNextImage = true; // Save the next image in the callcack call
-        sleep(2);
+        cam.set_property("Denoise",0 );
+        cam.set_property("GainAuto", "Off");
+        cam.set_property("ExposureAuto", "Off");
+        cam.set_property("Gain",0.0 );
+        cam.set_property("ExposureTime",33333.0 );
+        
+        double exp;
+        cam.get_property("ExposureTime",exp );
+        printf("Exposure Time is %f,ms\n", exp);
     }
+    catch(const std::exception& e)
+    {
+        std::cout << e.what() << '\n';
+    }
+    */
+    // Start the camera
+    
+    if( cam.start() )
+    {
+
+        for( int i = 0; i< 1; i++)
+        {
+            CustomData.SaveNextImage = true; // Save the next image in the callcack call
+            sleep(2);
+        }
 
 
-    // Simple implementation of "getch()"
-    printf("Press Enter to end the program");
-    char dummyvalue[10];
-    scanf("%c",dummyvalue);
+        // Simple implementation of "getch()"
+        printf("Press Enter to end the program");
+        char dummyvalue[10];
+        scanf("%c",dummyvalue);
 
-    cam.stop();
+        cam.stop();
+    }
 
     return 0;
 }
