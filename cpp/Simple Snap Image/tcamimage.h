@@ -13,7 +13,7 @@ class TcamImage : public gsttcam::TcamCamera
         TcamImage(std::string serial = "");
         ~TcamImage();
         void set_capture_format(std::string format, gsttcam::FrameSize size, gsttcam::FrameRate framerate);
-        bool start();
+        void start();
         bool snapImage(int timeout_ms);
         int getWidth()
         {

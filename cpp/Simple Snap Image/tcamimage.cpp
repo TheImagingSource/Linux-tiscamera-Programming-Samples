@@ -38,7 +38,7 @@ void TcamImage::set_capture_format(std::string format, FrameSize size, FrameRate
     TcamCamera::set_capture_format(format, size, framerate);
 }
 
-bool TcamImage::start()
+void TcamImage::start()
 {
     // Register a callback to be called for each new frame
     set_new_frame_callback(new_frame_cb, &_CustomData);

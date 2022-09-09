@@ -27,8 +27,14 @@ int main(int argc, char **argv)
     cv::Mat OpenCVImage;
     // Initialize our TcamCamera object "cam" with the serial number
     // of the camera, which is to be used in this program.
-    TcamImage cam("42719953");
-    //TcamCamera cam("00001234");
+    std::string serial = "41910044";
+
+    TcamImage cam(serial);
+    if( !cam.SerialExists(serial))
+    {
+        std::cout << "Serialnumber " << serial << " does not exist." << std::endl;
+        return 1;
+    }
     
     // Set a color video format, resolution and frame rate
     cam.set_capture_format("BGRx", FrameSize{640,480}, FrameRate{30,1});
