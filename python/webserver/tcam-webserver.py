@@ -1,57 +1,69 @@
-# pip3 install flask
-
-import sys
-from flask import Flask, Response
 import logging
-import tcam_camera
 import time
+# pip3 install flask
+from flask import Flask, Response, abort
+from tcam_camera import TcamCamera
 
 app = Flask(__name__)
 
 # Create the camera object and start the stream
-camera = tcam_camera.tcam_camera()
+camera = TcamCamera()
+
+camera.set_max_rate(5)
+
+# reference point in time to calculate current FPS
+t_fps_start = None
+fps_frame_count = 0
+
 
 def imagegenerator():
+    global t_fps_start
+    global fps_frame_count
     try:
         while True:
             frame = camera.snap_image(1000)
             if frame is not None:
+                fps_frame_count += 1
+                if t_fps_start is None:
+                    t_fps_start = time.time()
+                dt = time.time() - t_fps_start
+                if dt >= 10.0:
+                    fps = fps_frame_count / dt
+                    logging.info("Current FPS: %.1f", fps)
+                    fps_frame_count = 0
+                    t_fps_start = time.time()
                 # Create the boundary between the sent jpegs
                 yield (b'--imagingsource\r\n'
-                    b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+                       b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
             else:
                 logging.info("No frame received.")
 
-            # Send 10 frames per second only
-            time.sleep(0.1) 
     finally:
         logging.info("Stream closed")
 
 
-def loadfile(name):
-    f = open(name,"r")
-    if f is not None:
-        return f.read()
-    return "File " + name + " not found"
-
 @app.route('/mjpeg_stream')
 def imagestream():
     logging.info("Starting mjpeg stream")
-    return Response( imagegenerator() , mimetype='multipart/x-mixed-replace; boundary=imagingsource')
+    return Response(imagegenerator(), mimetype='multipart/x-mixed-replace; boundary=imagingsource')
 
-@app.route('/',methods=['GET', 'POST'])
+
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    logging.info('Send index')
-    return loadfile("index.html")
-   
-def main(argv):
-    loglevel = "INFO"
+    try:
+        with open("index.html", "r", encoding="UTF-8") as f:
+            return Response(f.read(), mimetype="text/html")
+    except FileNotFoundError as e:
+        abort(404, str(e))
+    return None
 
-    numeric_level = getattr(logging, loglevel,None)
-    logging.basicConfig(level=numeric_level)
+
+def main():
+    logging.basicConfig(level=logging.INFO)
     logging.info("Logging enabled")
-    
+
     app.run(host='0.0.0.0', threaded=True)
 
+
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    main()
