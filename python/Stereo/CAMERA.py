@@ -49,7 +49,7 @@ class CAMERA(TIS.TIS):
         '''
         for prop in self.properties:
             try:
-                self.Set_Property(prop['property'],prop['value'])
+                self.set_property(prop['property'],prop['value'])
             except Exception as error:
                 print(error)
 
@@ -60,7 +60,7 @@ class CAMERA(TIS.TIS):
         :param bool onoff: "On" or "Off"
         '''
         try:
-            self.Set_Property("TriggerMode", onoff)
+            self.set_property("TriggerMode", onoff)
         except Exception as error:
             print(error)
 
@@ -78,6 +78,6 @@ class CAMERA(TIS.TIS):
         
         imagefilename = "{0}_{1:04d}.jpg".format(self.imageprefix, self.imageCounter)
         print(imagefilename)
-        image = self.Get_image()
+        image = self.get_image()
         cv2.imwrite(imagefilename, image)
         self.busy = False

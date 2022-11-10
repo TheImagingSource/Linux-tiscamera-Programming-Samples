@@ -24,18 +24,18 @@ for cameraconfig in cameraconfigs['cameras']:
     print("Creating camera serial {}".format( cameraconfig['serial']))
 
     camera = TIS.TIS()
-    camera.openDevice(cameraconfig['serial'],
-                      cameraconfig['width'],
-                      cameraconfig['height'],
-                      cameraconfig['framerate'],
-                      TIS.SinkFormats.fromString(cameraconfig['pixelformat']),
-                      True)
+    camera.open_device(cameraconfig['serial'],
+                       cameraconfig['width'],
+                       cameraconfig['height'],
+                       cameraconfig['framerate'],
+                       TIS.SinkFormats[cameraconfig['pixelformat']].value,
+                       True)
     cameras.append(camera)
 
 for camera in cameras:
-    camera.Start_pipeline()
+    camera.start_pipeline()
 
 key = input("Hit Enter key to end program")
 
 for camera in cameras:
-    camera.Stop_pipeline()
+    camera.stop_pipeline()

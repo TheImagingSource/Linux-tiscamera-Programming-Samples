@@ -42,7 +42,7 @@ class TIS:
         self.pipeline = None
         self.source = None
 
-    def openDevice(self, serial, width, height, framerate, sinkformat: SinkFormats, showvideo: bool):
+    def open_device(self, serial, width, height, framerate, sinkformat: SinkFormats, showvideo: bool):
         ''' Inialize a device, e.g. camera.
         :param serial: Serial number of the camera to be used.
         :param width: Width of the wanted video format
@@ -57,12 +57,12 @@ class TIS:
         self.framerate = framerate
         self.sinkformat = sinkformat
         self.livedisplay = showvideo
-        self._createPipeline()
+        self._create_pipeline()
         self.source.set_property("serial", self.serialnumber)
         self.pipeline.set_state(Gst.State.READY)
         self.pipeline.get_state(40000000)
 
-    def _createPipeline(self):
+    def _create_pipeline(self):
         p = 'tcambin name=source ! capsfilter name=caps'
         if self.livedisplay is True:
             p += " ! tee name=t"
@@ -102,10 +102,10 @@ class TIS:
                 raise
         return False
 
-    def setSinkFormat(self, sf: SinkFormats):
+    def set_sink_format(self, sf: SinkFormats):
         self.sinkformat = sf
 
-    def showLive(self, show: bool):
+    def show_live(self, show: bool):
         self.livedisplay = show
 
     def _setcaps(self):
@@ -117,7 +117,7 @@ class TIS:
         capsfilter = self.pipeline.get_by_name("caps")
         capsfilter.set_property("caps", caps)
 
-    def Start_pipeline(self):
+    def start_pipeline(self):
         """
         Start the pipeline, so the video runs
         """
@@ -182,7 +182,7 @@ class TIS:
             tries -= 1
             time.sleep(float(timeout) / 10.0)
 
-    def Snap_image(self, timeout):
+    def snap_image(self, timeout):
         '''
         Snap an image from stream using a timeout.
         :param timeout: wait time in second, should be a float number. Not used
@@ -199,10 +199,10 @@ class TIS:
 
         return False
 
-    def Get_image(self):
+    def get_image(self):
         return self.img_mat
 
-    def Stop_pipeline(self):
+    def stop_pipeline(self):
         self.pipeline.set_state(Gst.State.PAUSED)
         self.pipeline.set_state(Gst.State.READY)
 
@@ -212,7 +212,7 @@ class TIS:
         '''
         return self.source
 
-    def List_Properties(self):
+    def list_properties(self):
         property_names = self.source.get_tcam_property_names()
 
         for name in property_names:
@@ -223,54 +223,54 @@ class TIS:
             except Exception as error:
                 raise Exception(name + " : " + error.message)
 
-    def Get_Property(self, PropertyName):
+    def get_property(self, property_name):
         """
         Return the value of the passed property.
         If something fails an
         exception is thrown.
-        :param PropertyName: Name of the property to set
+        :param property_name: Name of the property to set
         :return: Current value of the property
         """
         try:
-            baseproperty = self.source.get_tcam_property(PropertyName)
+            baseproperty = self.source.get_tcam_property(property_name)
             val = baseproperty.get_value()
             return val
 
         except GLib.Error as error:
-            raise Exception(PropertyName + " : " + error.message)
+            raise Exception(property_name + " : " + error.message)
             return 0
         return 0
 
-    def Set_Property(self, PropertyName, value):
+    def set_property(self, property_name, value):
         '''
         Pass a new value to a camera property. If something fails an
         exception is thrown.
-        :param PropertyName: Name of the property to set
+        :param property_name: Name of the property to set
         :param value: Property value. Can be of type int, float, string and boolean
         '''
         try:
-            baseproperty = self.source.get_tcam_property(PropertyName)
+            baseproperty = self.source.get_tcam_property(property_name)
             baseproperty.set_value(value)
         except GLib.Error as error:
-            raise Exception(PropertyName + " : " + error.message)
+            raise Exception(property_name + " : " + error.message)
 
-    def execute_command(self, PropertyName):
+    def execute_command(self, property_name):
         '''
         Execute a command property like Software Trigger
         If something fails an exception is thrown.
-        :param PropertyName: Name of the property to set
+        :param property_name: Name of the property to set
         '''
         try:
-            baseproperty = self.source.get_tcam_property(PropertyName)
+            baseproperty = self.source.get_tcam_property(property_name)
             baseproperty.set_command()
         except GLib.Error as error:
-            raise Exception( PropertyName + " : " + error.message)
+            raise Exception( property_name + " : " + error.message)
 
-    def Set_Image_Callback(self, function, *data):
+    def set_image_callback(self, function, *data):
         self.ImageCallback = function
         self.ImageCallbackData = data
 
-    def selectDevice(self):
+    def select_device(self):
         ''' Select a camera, its video format and frame rate
         :return: True on success, False on nothing selected
         '''
@@ -297,14 +297,14 @@ class TIS:
             self.serialnumber = serials[i-1]
             print(self.serialnumber)
 
-            return self.selectFormat()
+            return self.select_format()
 
         return False
 
-    def selectFormat(self):
+    def select_format(self):
         '''
         '''
-        formats = self.createFormats()
+        formats = self.create_formats()
         i = 0
         f = []
         for key, value in formats.items():
@@ -340,10 +340,10 @@ class TIS:
 
         framerate = formats[formatindex].res_list[i-1].fps[o-1]
         # print(format,width,height,framerate )
-        self.openDevice(self.serialnumber, width, height, framerate, SinkFormats.BGRA, True)
+        self.open_device(self.serialnumber, width, height, framerate, SinkFormats.BGRA, True)
         return True
 
-    def createFormats(self):
+    def create_formats(self):
         source = Gst.ElementFactory.make("tcambin")
         source.set_property("serial", self.serialnumber)
 

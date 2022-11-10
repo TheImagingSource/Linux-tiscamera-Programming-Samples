@@ -24,9 +24,9 @@ class CustomData:
 
 def on_new_image(camera, userdata):
     if camera.imageprefix == "left":
-        userdata.imageleft = camera.Get_image()
+        userdata.imageleft = camera.get_image()
     else:
-        userdata.imageright = camera.Get_image()
+        userdata.imageright = camera.get_image()
 
 
 def createAnaglyphimage(images):
@@ -36,8 +36,8 @@ def createAnaglyphimage(images):
         else:
             size = images.imageleft.shape[0], images.imageleft.shape[1], 1
         images.dummy = np.zeros(size, dtype=np.uint8)
-       
-    anaglyph = cv2.merge((images.dummy, images.imageright, images.imageleft) )    
+
+    anaglyph = cv2.merge((images.dummy, images.imageright, images.imageleft) )
     cv2.imshow('Stereo', anaglyph)
 
 CD = CustomData()
@@ -50,25 +50,25 @@ cameras = list()
 
 for cameraconfig in cameraconfigs['cameras']:
     camera = CAMERA.CAMERA(cameraconfig['properties'], cameraconfig['imageprefix'])
-    
-    camera.openDevice(cameraconfig['serial'],
-                      cameraconfig['width'],
-                      cameraconfig['height'],
-                      cameraconfig['framerate'],
-                      TIS.SinkFormats.fromString(cameraconfig['pixelformat']),
-                      False)
 
-    camera.Set_Image_Callback(on_new_image, CD)                                
+    camera.open_device(cameraconfig['serial'],
+                       cameraconfig['width'],
+                       cameraconfig['height'],
+                       cameraconfig['framerate'],
+                       TIS.SinkFormats[cameraconfig['pixelformat']],
+                       False)
+
+    camera.set_image_callback(on_new_image, CD)
     cameras.append(camera)
 
 
-# cameras[0].List_Properties()
+# cameras[0].list_properties()
 CD.busy = True
 
 for camera in cameras:
     camera.enableTriggerMode( "Off" )
     camera.busy = True
-    camera.Start_pipeline()
+    camera.start_pipeline()
     camera.applyProperties()
     camera.enableTriggerMode( "On" )
 
@@ -77,9 +77,9 @@ for camera in cameras:
 time.sleep(0.5)
 
 try:
-    y = cameras[0].Get_Property("OffsetY")
-    x1 = cameras[0].Get_Property("OffsetX")
-    x2 = cameras[1].Get_Property("OffsetX")
+    y = cameras[0].get_property("OffsetY")
+    x1 = cameras[0].get_property("OffsetX")
+    x2 = cameras[1].get_property("OffsetX")
 except Exception as error:
     print(error)
 
@@ -110,29 +110,29 @@ try:
         else:
             error += 1
 
-        if lastkey == 119:            
+        if lastkey == 119:
             y -= 2
-            cameras[0].Set_Property("Offset Y",y)
-            print("y  {} x1 {}  x2 {}".format(y, x1 ,x2))
+            cameras[0].set_property("Offset Y", y)
+            print("y  {} x1 {}  x2 {}".format(y, x1, x2))
 
         if lastkey == 115:
             y += 2
-            cameras[0].Set_Property("Offset Y",y)
-            print("y  {} x1 {}  x2 {}".format(y, x1 ,x2))
+            cameras[0].set_property("Offset Y", y)
+            print("y  {} x1 {}  x2 {}".format(y, x1, x2))
 
         if lastkey == 97:
             x1 -= 2
-            cameras[0].Set_Property("Offset X",x1)
+            cameras[0].set_property("Offset X", x1)
             x2 += 2
-            cameras[1].Set_Property("Offset X",x2)
-            print("y  {} x1 {}  x2 {}".format(y, x1 ,x2))
+            cameras[1].set_property("Offset X", x2)
+            print("y  {} x1 {}  x2 {}".format(y, x1, x2))
 
         if lastkey == 100:
             x1 += 2
-            cameras[0].Set_Property("Offset X",x1)
+            cameras[0].set_property("Offset X", x1)
             x2 -= 2
-            cameras[1].Set_Property("Offset X",x2)
-            print("y  {} x1 {}  x2 {}".format(y, x1 ,x2))
+            cameras[1].set_property("Offset X", x2)
+            print("y  {} x1 {}  x2 {}".format(y, x1, x2))
 
         lastkey = cv2.waitKey(1)
 
@@ -140,6 +140,6 @@ except KeyboardInterrupt:
     cv2.destroyWindow('Stereo')
 
 for camera in cameras:
-    #camera.Set_Property("ActionSchedulerCancel",1)
+    #camera.set_property("ActionSchedulerCancel",1)
     camera.enableTriggerMode("Off")
-    camera.Stop_pipeline()
+    camera.stop_pipeline()

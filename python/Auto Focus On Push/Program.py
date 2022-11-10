@@ -15,13 +15,13 @@ Tis = TIS.TIS()
 #Tis = Tis.openDevice("00001234", 640, 480, "30/1",TIS.SinkFormats.BGRA, True)
 
 # The next line is for selecting a device, video format and frame rate.
-if not Tis.selectDevice():
+if not Tis.select_device():
     quit(0)
 
-Tis.setSinkFormat(TIS.SinkFormats.BGRA) #Use BGRA format in the Memory
-Tis.List_Properties()  # List available properties
+Tis.set_sink_format(TIS.SinkFormats.BGRA) #Use BGRA format in the Memory
+Tis.list_properties()  # List available properties
 
-Tis.Start_pipeline()  # Start the pipeline so the camera streams
+Tis.start_pipeline()  # Start the pipeline so the camera streams
 
 
 
@@ -31,27 +31,27 @@ while True:
 
     try:               
         if key == "f":
-            Tis.Set_Property("FocusAuto", "Once")
+            Tis.set_property("FocusAuto", "Once")
 
         if key == "f+":
-            focus = Tis.Get_Property("Focus")
+            focus = Tis.get_property("Focus")
             focus += 10
-            Tis.Set_Property("Focus", focus)
+            Tis.set_property("Focus", focus)
 
         if key == "f-":
-            focus = Tis.Get_Property("Focus")
+            focus = Tis.get_property("Focus")
             focus -= 10
-            Tis.Set_Property("Focus", focus)
+            Tis.set_property("Focus", focus)
 
         if key == "z+":
-            zoom = Tis.Get_Property("Zoom")
+            zoom = Tis.get_property("Zoom")
             zoom += 1
-            Tis.Set_Property("Zoom", zoom)
+            Tis.set_property("Zoom", zoom)
 
         if key == "z-":
-            zoom = Tis.Get_Property("Zoom")
+            zoom = Tis.get_property("Zoom")
             zoom -= 1
-            Tis.Set_Property("Zoom", zoom)
+            Tis.set_property("Zoom", zoom)
 
     except Exception as error:
         print(error)
@@ -59,5 +59,5 @@ while True:
     if key == "q":
         break
 
-Tis.Stop_pipeline()
+Tis.stop_pipeline()
 print('Program ends')
