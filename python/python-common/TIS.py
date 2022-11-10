@@ -1,19 +1,19 @@
 import time
 from collections import namedtuple
 
-import gi
 import re
+import gi
 import numpy
 from enum import Enum
 gi.require_version("Gst", "1.0")
 gi.require_version("Tcam", "1.0")
 
-from gi.repository import GLib, GObject, Gst, Tcam
-
+from gi.repository import GLib, Gst, Tcam
 
 
 DeviceInfo = namedtuple("DeviceInfo", "status name identifier connection_type")
 CameraProperty = namedtuple("CameraProperty", "status value min max default step type flags category group")
+
 
 class SinkFormats(Enum):
     GRAY8 = 0
@@ -21,40 +21,36 @@ class SinkFormats(Enum):
     BGRA = 2
 
     def toString(pf):
-        if( pf == SinkFormats.GRAY16_LE ):
+        if (pf == SinkFormats.GRAY16_LE):
             return "GRAY16_LE"
 
-        if( pf == SinkFormats.GRAY8 ):
+        if (pf == SinkFormats.GRAY8):
             return "GRAY8"
 
-        if( pf == SinkFormats.BGRA ):
+        if (pf == SinkFormats.BGRA):
             return "BGRx"
 
         return "BGRx"
 
     def fromString(pf):
-        if( pf == "GRAY16_LE"):
+        if (pf == "GRAY16_LE"):
             return SinkFormats.GRAY16_LE
-        if( pf == "GRAY8"):
+        if (pf == "GRAY8"):
             return SinkFormats.GRAY8
-      
-        return SinkFormats.BGRA
 
+        return SinkFormats.BGRA
 
 
 class TIS:
     'The Imaging Source Camera'
 
     def __init__(self):
-        ''' Constructor
-        :return: none
-        '''
-        Gst.init([]) # Usually better to call in the main function.
+        Gst.init([])  # Usually better to call in the main function.
         # Gst.debug_set_default_threshold(Gst.DebugLevel.WARNING)
         self.serialnumber = ""
         self.height = 0
         self.width = 0
-        self.framerate="15/1"
+        self.framerate = "15/1"
         self.livedisplay = True
         self.sinkformat = SinkFormats.BGRA
         self.sample = None
@@ -65,8 +61,7 @@ class TIS:
         self.pipeline = None
         self.source = None
 
-
-    def openDevice(self,serial, width, height, framerate, sinkformat: SinkFormats, showvideo: bool):
+    def openDevice(self, serial, width, height, framerate, sinkformat: SinkFormats, showvideo: bool):
         ''' Inialize a device, e.g. camera.
         :param serial: Serial number of the camera to be used.
         :param width: Width of the wanted video format
@@ -85,7 +80,6 @@ class TIS:
         self.source.set_property("serial", self.serialnumber)
         self.pipeline.set_state(Gst.State.READY)
         self.pipeline.get_state(40000000)
-
 
     def _createPipeline(self):
         p = 'tcambin name=source ! capsfilter name=caps'
@@ -108,11 +102,10 @@ class TIS:
 
         # Query a pointer to the appsink, so we can assign the callback function.
         appsink = self.pipeline.get_by_name("sink")
-        appsink.set_property("max-buffers",5)
-        appsink.set_property("drop",1)
-        appsink.set_property("emit-signals",1)
+        appsink.set_property("max-buffers", 5)
+        appsink.set_property("drop", 1)
+        appsink.set_property("emit-signals", 1)
         appsink.connect('new-sample', self.on_new_buffer)
-
 
     def on_new_buffer(self, appsink):
         self.newsample = True
@@ -128,17 +121,14 @@ class TIS:
                 raise
         return False
 
-
     def setSinkFormat(self, sf: SinkFormats):
         self.sinkformat = sf
-
 
     def showLive(self, show: bool):
         self.livedisplay = show
 
-
     def _setcaps(self):
-        """ 
+        """
         Set pixel and sink format and frame rate
         """
         caps = Gst.Caps.new_empty()
@@ -146,10 +136,9 @@ class TIS:
         structure = Gst.Structure.new_from_string(videoformat)
 
         caps.append_structure(structure)
-        
+
         capsfilter = self.pipeline.get_by_name("caps")
         capsfilter.set_property("caps", caps)
-
 
     def Start_pipeline(self):
         """
@@ -158,16 +147,15 @@ class TIS:
         try:
             self._setcaps()
             self.pipeline.set_state(Gst.State.PLAYING)
-            error = self.pipeline.get_state(5000000000) 
+            error = self.pipeline.get_state(5000000000)
             if error[1] != Gst.State.PLAYING:
-                print("Error starting pipeline. {0}".format("") )    
+                print("Error starting pipeline. {0}".format("") )
                 return False
 
         except: # GError as error:
             print("Error starting pipeline: {0}".format("unknown too"))
             raise
         return True
-
 
     def __convert_sample_to_numpy(self):
         ''' Convert a GStreamer sample to a numpy array
@@ -184,29 +172,28 @@ class TIS:
         if success:
             data = info.data
             mem.unmap(info)
-                
+
             bpp = 4
             dtype = numpy.uint8
-            
-            if( caps.get_structure(0).get_value('format') == "BGRx" ):
+
+            if (caps.get_structure(0).get_value('format') == "BGRx"):
                 bpp = 4
 
-            if(caps.get_structure(0).get_value('format') == "GRAY8" ):
+            if (caps.get_structure(0).get_value('format') == "GRAY8"):
                 bpp = 1
 
-            if(caps.get_structure(0).get_value('format') == "GRAY16_LE" ):
+            if (caps.get_structure(0).get_value('format') == "GRAY16_LE"):
                 bpp = 1
                 dtype = numpy.uint16
 
             self.img_mat = numpy.ndarray(
                 (caps.get_structure(0).get_value('height'),
-                caps.get_structure(0).get_value('width'),
-                bpp),
+                 caps.get_structure(0).get_value('width'),
+                 bpp),
                 buffer=data,
                 dtype=dtype)
             self.newsample = False
             self.samplelocked = False
-
 
     def wait_for_image(self, timeout):
         ''' Wait for a new image with timeout
@@ -217,7 +204,6 @@ class TIS:
         while tries > 0 and not self.newsample:
             tries -= 1
             time.sleep(float(timeout) / 10.0)
-
 
     def Snap_image(self, timeout):
         '''
@@ -236,22 +222,18 @@ class TIS:
 
         return False
 
-
     def Get_image(self):
         return self.img_mat
-
 
     def Stop_pipeline(self):
         self.pipeline.set_state(Gst.State.PAUSED)
         self.pipeline.set_state(Gst.State.READY)
-        
 
     def get_source(self):
         '''
         Return the source element of the pipeline.
         '''
         return self.source
-
 
     def List_Properties(self):
         property_names = self.source.get_tcam_property_names()
@@ -260,11 +242,9 @@ class TIS:
             try:
                 base = self.source.get_tcam_property(name)
                 print("{}\t{}".format(base.get_display_name(),
-                                      name
-                                        ))
+                                      name))
             except Exception as error:
-                raise Exception( name + " : " + error.message )
-
+                raise Exception(name + " : " + error.message)
 
     def Get_Property(self, PropertyName):
         """
@@ -280,10 +260,9 @@ class TIS:
             return val
 
         except GLib.Error as error:
-            raise Exception(PropertyName + " : " + error.message )
+            raise Exception(PropertyName + " : " + error.message)
             return 0
         return 0
-
 
     def Set_Property(self, PropertyName, value):
         '''
@@ -296,10 +275,9 @@ class TIS:
             baseproperty = self.source.get_tcam_property(PropertyName)
             baseproperty.set_value(value)
         except GLib.Error as error:
-            raise Exception(PropertyName + " : " + error.message )
+            raise Exception(PropertyName + " : " + error.message)
 
-
-    def execute_command(self, PropertyName ):
+    def execute_command(self, PropertyName):
         '''
         Execute a command property like Software Trigger
         If something fails an exception is thrown.
@@ -309,13 +287,11 @@ class TIS:
             baseproperty = self.source.get_tcam_property(PropertyName)
             baseproperty.set_command()
         except GLib.Error as error:
-            raise Exception( PropertyName + " : " + error.message )
-
+            raise Exception( PropertyName + " : " + error.message)
 
     def Set_Image_Callback(self, function, *data):
         self.ImageCallback = function
         self.ImageCallbackData = data
-
 
     def selectDevice(self):
         ''' Select a camera, its video format and frame rate
@@ -327,16 +303,14 @@ class TIS:
         i = 0
         for device in monitor.get_devices():
             struc = device.get_properties()
-            i +=1
-            print("{} : Model: {} Serial: {} {} ".format(i, 
+            i += 1
+            print("{} : Model: {} Serial: {} {} ".format(i,
                                                          struc.get_string("model"),
                                                          struc.get_string("serial"),
-                                                         struc.get_string("type")
-                                                        ))
+                                                         struc.get_string("type")))
 
             serials.append("{}-{}".format(struc.get_string("serial"),
-                                          struc.get_string("type")                                        )
-                           )
+                                          struc.get_string("type")))
 
         if i > 0:
             i = int(input("Select : "))
@@ -345,18 +319,17 @@ class TIS:
 
             self.serialnumber = serials[i-1]
             print(self.serialnumber)
-            
+
             return self.selectFormat()
 
         return False
-
 
     def selectFormat(self):
         '''
         '''
         formats = self.createFormats()
         i = 0
-        f = [] 
+        f = []
         for key, value in formats.items():
             f.append(key)
             i = i + 1
@@ -376,29 +349,27 @@ class TIS:
         if i == 0:
             return False
 
-
         width = formats[formatindex].res_list[i-1].width
         height = formats[formatindex].res_list[i-1].height
         o = 0
-        for rate in formats[formatindex].res_list[i-1].fps :
+        for rate in formats[formatindex].res_list[i-1].fps:
             o += 1
             print("{}:  {}".format(o, rate))
 
-        framerate = formats[formatindex].res_list[i-1].fps[o-1] 
+        framerate = formats[formatindex].res_list[i-1].fps[o-1]
         o = int(input("Select : "))
         if o == 0:
             return False
 
-        framerate = formats[formatindex].res_list[i-1].fps[o-1] 
-        #print(format,width,height,framerate )
+        framerate = formats[formatindex].res_list[i-1].fps[o-1]
+        # print(format,width,height,framerate )
         self.openDevice(self.serialnumber, width, height, framerate, SinkFormats.BGRA, True)
         return True
-
 
     def createFormats(self):
         source = Gst.ElementFactory.make("tcambin")
         source.set_property("serial", self.serialnumber)
-        
+
         source.set_state(Gst.State.READY)
 
         caps = source.get_static_pad("src").query_caps()
@@ -412,10 +383,9 @@ class TIS:
 
                 if videoformat not in format_dict:
                     format_dict[videoformat] = FmtDesc(name, videoformat)
-                    
 
                 width = structure.get_value("width")
-                height = structure.get_value("height")       
+                height = structure.get_value("height")
 
                 rates = self.get_framerates(structure)
                 tmprates = []
@@ -423,7 +393,7 @@ class TIS:
                 for rate in rates:
                     tmprates.append(str(rate))
 
-                format_dict[videoformat].res_list.append(ResDesc(width, height, tmprates))      
+                format_dict[videoformat].res_list.append(ResDesc(width, height, tmprates))
 
             except:
                 print("Except")
@@ -441,7 +411,7 @@ class TIS:
             if type(tmprates) == Gst.FractionRange:
                 # A range is given only, so create a list of frame rate in 10 fps steps:
                 rates = []
-                rates.append("{0}/{1}".format(int(tmprates.start.num),int(tmprates.start.denom)))
+                rates.append("{0}/{1}".format(int(tmprates.start.num), int(tmprates.start.denom)))
                 r = int((tmprates.start.num + 10) / 10) * 10
                 while r < (tmprates.stop.num / tmprates.stop.denom ):
                     rates.append("{0}/1".format(r))
@@ -462,7 +432,7 @@ class TIS:
 
 class ResDesc:
     """"""
-    def __init__(self,                 
+    def __init__(self,
                  width: int,
                  height: int,
                  fps: list):
