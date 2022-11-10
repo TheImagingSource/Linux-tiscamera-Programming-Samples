@@ -16,29 +16,10 @@ CameraProperty = namedtuple("CameraProperty", "status value min max default step
 
 
 class SinkFormats(Enum):
-    GRAY8 = 0
-    GRAY16_LE = 1
-    BGRA = 2
-
-    def toString(pf):
-        if (pf == SinkFormats.GRAY16_LE):
-            return "GRAY16_LE"
-
-        if (pf == SinkFormats.GRAY8):
-            return "GRAY8"
-
-        if (pf == SinkFormats.BGRA):
-            return "BGRx"
-
-        return "BGRx"
-
-    def fromString(pf):
-        if (pf == "GRAY16_LE"):
-            return SinkFormats.GRAY16_LE
-        if (pf == "GRAY8"):
-            return SinkFormats.GRAY8
-
-        return SinkFormats.BGRA
+    GRAY8 = "GRAY8"
+    GRAY16_LE = "GRAY16_LE"
+    BGRA = "BGRx"
+    BGRX = "BGRx"
 
 
 class TIS:
@@ -131,11 +112,7 @@ class TIS:
         """
         Set pixel and sink format and frame rate
         """
-        caps = Gst.Caps.new_empty()
-        videoformat = 'video/x-raw,format=%s,width=%d,height=%d,framerate=%s' % ( SinkFormats.toString(self.sinkformat),self.width,self.height,self.framerate,)
-        structure = Gst.Structure.new_from_string(videoformat)
-
-        caps.append_structure(structure)
+        caps = Gst.Caps.from_string('video/x-raw,format=%s,width=%d,height=%d,framerate=%s' % (self.sinkformat.value, self.width, self.height, self.framerate))
 
         capsfilter = self.pipeline.get_by_name("caps")
         capsfilter.set_property("caps", caps)
