@@ -91,15 +91,11 @@ class TIS:
     def on_new_buffer(self, appsink):
         self.newsample = True
         if self.samplelocked is False:
-            try:
-                self.sample = appsink.get_property('last-sample')
-                if self.ImageCallback is not None:
-                    self.__convert_sample_to_numpy()
-                    self.ImageCallback(self, *self.ImageCallbackData);
+            self.sample = appsink.get_property('last-sample')
+            if self.ImageCallback is not None:
+                self.__convert_sample_to_numpy()
+                self.ImageCallback(self, *self.ImageCallbackData)
 
-            except GLib.Error as error:
-                print("Error on_new_buffer pipeline: {0}".format(error))
-                raise
         return False
 
     def set_sink_format(self, sf: SinkFormats):
@@ -121,17 +117,12 @@ class TIS:
         """
         Start the pipeline, so the video runs
         """
-        try:
-            self._setcaps()
-            self.pipeline.set_state(Gst.State.PLAYING)
-            error = self.pipeline.get_state(5000000000)
-            if error[1] != Gst.State.PLAYING:
-                print("Error starting pipeline. {0}".format("") )
-                return False
-
-        except: # GError as error:
-            print("Error starting pipeline: {0}".format("unknown too"))
-            raise
+        self._setcaps()
+        self.pipeline.set_state(Gst.State.PLAYING)
+        error = self.pipeline.get_state(5000000000)
+        if error[1] != Gst.State.PLAYING:
+            print("Error starting pipeline. {0}".format(""))
+            return False
         return True
 
     def __convert_sample_to_numpy(self):
@@ -221,7 +212,7 @@ class TIS:
                 print("{}\t{}".format(base.get_display_name(),
                                       name))
             except Exception as error:
-                raise Exception(name + " : " + error.message)
+                raise RuntimeError(f"Failed to get property '{name}'") from error
 
     def get_property(self, property_name):
         """
@@ -236,10 +227,10 @@ class TIS:
             val = baseproperty.get_value()
             return val
 
-        except GLib.Error as error:
-            raise Exception(property_name + " : " + error.message)
-            return 0
-        return 0
+        except Exception as error:
+            raise RuntimeError(f"Failed to get property '{property_name}'") from error
+
+        return None
 
     def set_property(self, property_name, value):
         '''
@@ -251,8 +242,8 @@ class TIS:
         try:
             baseproperty = self.source.get_tcam_property(property_name)
             baseproperty.set_value(value)
-        except GLib.Error as error:
-            raise Exception(property_name + " : " + error.message)
+        except Exception as error:
+            raise RuntimeError(f"Failed to set property '{property_name}'") from error
 
     def execute_command(self, property_name):
         '''
@@ -263,8 +254,8 @@ class TIS:
         try:
             baseproperty = self.source.get_tcam_property(property_name)
             baseproperty.set_command()
-        except GLib.Error as error:
-            raise Exception( property_name + " : " + error.message)
+        except Exception as error:
+            raise RuntimeError(f"Failed to execute '{property_name}'") from error
 
     def set_image_callback(self, function, *data):
         self.ImageCallback = function
@@ -371,10 +362,8 @@ class TIS:
                     tmprates.append(str(rate))
 
                 format_dict[videoformat].res_list.append(ResDesc(width, height, tmprates))
-
-            except:
-                print("Except")
-                pass
+            except Exception as error:
+                print(f"Exception during format enumeration: {str(error)}")
 
         source.set_state(Gst.State.NULL)
         source.set_property("serial", "")
@@ -390,11 +379,11 @@ class TIS:
                 rates = []
                 rates.append("{0}/{1}".format(int(tmprates.start.num), int(tmprates.start.denom)))
                 r = int((tmprates.start.num + 10) / 10) * 10
-                while r < (tmprates.stop.num / tmprates.stop.denom ):
+                while r < (tmprates.stop.num / tmprates.stop.denom):
                     rates.append("{0}/1".format(r))
                     r += 10
 
-                rates.append("{0}/{1}".format(int(tmprates.stop.num),int(tmprates.stop.denom)))
+                rates.append("{0}/{1}".format(int(tmprates.stop.num), int(tmprates.stop.denom)))
             else:
                 rates = tmprates
 
