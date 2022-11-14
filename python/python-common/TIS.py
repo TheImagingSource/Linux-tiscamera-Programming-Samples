@@ -54,7 +54,8 @@ class TIS:
         :param width: Width of the wanted video format
         :param height: Height of the wanted video format
         :param framerate: Numerator of the frame rate. /1 is added automatically
-        :param color: True = 8 bit color, False = 8 bit mono. ToDo: Y16
+        :param sinkformat: Color format to use for the sink
+        :param showvideo: Whether to always open a live video preview
         :return: none
         '''
         self.serialnumber = serial
