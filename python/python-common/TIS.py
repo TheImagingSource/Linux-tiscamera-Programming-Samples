@@ -135,33 +135,29 @@ class TIS:
         self.samplelocked = True
         buf = self.sample.get_buffer()
         caps = self.sample.get_caps()
-        mem = buf.get_all_memory()
-        success, info = mem.map(Gst.MapFlags.READ)
-        if success:
-            data = info.data
-            mem.unmap(info)
+        data = buf.extract_dup(0, buf.get_size())
 
+        bpp = 4
+        dtype = numpy.uint8
+
+        if (caps.get_structure(0).get_value('format') == "BGRx"):
             bpp = 4
-            dtype = numpy.uint8
 
-            if (caps.get_structure(0).get_value('format') == "BGRx"):
-                bpp = 4
+        if (caps.get_structure(0).get_value('format') == "GRAY8"):
+            bpp = 1
 
-            if (caps.get_structure(0).get_value('format') == "GRAY8"):
-                bpp = 1
+        if (caps.get_structure(0).get_value('format') == "GRAY16_LE"):
+            bpp = 1
+            dtype = numpy.uint16
 
-            if (caps.get_structure(0).get_value('format') == "GRAY16_LE"):
-                bpp = 1
-                dtype = numpy.uint16
-
-            self.img_mat = numpy.ndarray(
-                (caps.get_structure(0).get_value('height'),
-                 caps.get_structure(0).get_value('width'),
-                 bpp),
-                buffer=data,
-                dtype=dtype)
-            self.newsample = False
-            self.samplelocked = False
+        self.img_mat = numpy.ndarray(
+            (caps.get_structure(0).get_value('height'),
+             caps.get_structure(0).get_value('width'),
+             bpp),
+            buffer=data,
+            dtype=dtype)
+        self.newsample = False
+        self.samplelocked = False
 
     def wait_for_image(self, timeout):
         ''' Wait for a new image with timeout
