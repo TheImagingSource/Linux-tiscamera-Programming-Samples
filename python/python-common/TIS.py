@@ -26,7 +26,13 @@ class TIS:
     'The Imaging Source Camera'
 
     def __init__(self):
-        Gst.init([])  # Usually better to call in the main function.
+        try:
+            if not Gst.is_initialized():
+                Gst.init(())  # Usually better to call in the main function.
+        except gi.overrides.Gst.NotInitialized:
+            # Older gst-python overrides seem to have a bug where Gst needs to
+            # already be initialized to call Gst.is_initialized
+            Gst.init(())
         # Gst.debug_set_default_threshold(Gst.DebugLevel.WARNING)
         self.serialnumber = ""
         self.height = 0
