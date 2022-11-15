@@ -1,24 +1,34 @@
 import logging
 import time
+import sys
 # pip3 install flask
 from flask import Flask, Response, abort
-from tcam_camera import TcamCamera
+sys.path.append("../python-common")
+
+from TIS import TIS, SinkFormats
 
 app = Flask(__name__)
 
-# Create the camera object and start the stream
-camera = TcamCamera()
 
-camera.set_max_rate(5)
+DEVICE_FRAMERATE = "15/1"
+OUTPUT_FRAMERATE = "10/1"
+
+# Create the camera object and start the stream
+camera = TIS()
+camera.open_device(None, 640, 480, f"{DEVICE_FRAMERATE}", SinkFormats.BGRA, False,
+                   conversion=f"videorate ! video/x-raw,framerate={OUTPUT_FRAMERATE} ! videoconvert ! jpegenc quality=60")
+camera.start_pipeline()
 
 # reference point in time to calculate current FPS
 t_fps_start = None
 fps_frame_count = 0
+current_fps = 0.0
 
 
 def imagegenerator():
     global t_fps_start
     global fps_frame_count
+    global current_fps
     try:
         while True:
             frame = camera.snap_image(1000)
@@ -28,8 +38,8 @@ def imagegenerator():
                     t_fps_start = time.time()
                 dt = time.time() - t_fps_start
                 if dt >= 10.0:
-                    fps = fps_frame_count / dt
-                    logging.info("Current FPS: %.1f", fps)
+                    current_fps = fps_frame_count / dt
+                    logging.info("Current FPS: %.1f", current_fps)
                     fps_frame_count = 0
                     t_fps_start = time.time()
                 # Create the boundary between the sent jpegs

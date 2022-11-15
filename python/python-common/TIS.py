@@ -38,17 +38,18 @@ class TIS:
         self.height = 0
         self.width = 0
         self.framerate = "15/1"
-        self.livedisplay = True
         self.sinkformat = SinkFormats.BGRA
-        self.sample = None
-        self.samplelocked = False
-        self.newsample = False
         self.img_mat = None
         self.ImageCallback = None
         self.pipeline = None
         self.source = None
+        self.appsink = None
 
-    def open_device(self, serial, width, height, framerate, sinkformat: SinkFormats, showvideo: bool):
+    def open_device(self, serial,
+                    width, height, framerate,
+                    sinkformat: SinkFormats,
+                    showvideo: bool,
+                    conversion: str = ""):
         ''' Inialize a device, e.g. camera.
         :param serial: Serial number of the camera to be used.
         :param width: Width of the wanted video format
@@ -56,27 +57,31 @@ class TIS:
         :param framerate: Numerator of the frame rate. /1 is added automatically
         :param sinkformat: Color format to use for the sink
         :param showvideo: Whether to always open a live video preview
+        :param conversion: Optional pipeline string to add a conversion before the appsink
         :return: none
         '''
+        if serial is None:
+            serial = self.__get_serial_by_index(0)
         self.serialnumber = serial
         self.height = height
         self.width = width
         self.framerate = framerate
         self.sinkformat = sinkformat
-        self.livedisplay = showvideo
-        self._create_pipeline()
+        self._create_pipeline(conversion, showvideo)
         self.source.set_property("serial", self.serialnumber)
         self.pipeline.set_state(Gst.State.READY)
         self.pipeline.get_state(40000000)
 
-    def _create_pipeline(self):
+    def _create_pipeline(self, conversion: str, showvideo: bool):
+        if conversion and not conversion.strip().endswith("!"):
+            conversion += " !"
         p = 'tcambin name=source ! capsfilter name=caps'
-        if self.livedisplay is True:
+        if showvideo:
             p += " ! tee name=t"
             p += " t. ! queue ! videoconvert ! ximagesink"
-            p += " t. ! queue ! appsink name=sink"
+            p += f" t. ! queue ! {conversion} appsink name=sink"
         else:
-            p += ' ! appsink name=sink'
+            p += f' ! {conversion} appsink name=sink'
 
         print(p)
         try:
@@ -91,19 +96,21 @@ class TIS:
         # Query a pointer to the appsink, so we can assign the callback function.
         appsink = self.pipeline.get_by_name("sink")
         appsink.set_property("max-buffers", 5)
-        appsink.set_property("drop", 1)
-        appsink.set_property("emit-signals", 1)
-        appsink.connect('new-sample', self.on_new_buffer)
+        appsink.set_property("drop", True)
+        appsink.set_property("emit-signals", True)
+        appsink.set_property("enable-last-sample", True)
+        appsink.connect('new-sample', self.__on_new_buffer)
+        self.appsink = appsink
 
-    def on_new_buffer(self, appsink):
-        self.newsample = True
-        if self.samplelocked is False:
-            self.sample = appsink.get_property('last-sample')
-            if self.ImageCallback is not None:
-                self.__convert_sample_to_numpy()
-                self.ImageCallback(self, *self.ImageCallbackData)
-
-        return False
+    def __on_new_buffer(self, appsink):
+        sample = appsink.get_property('last-sample')
+        if sample and self.ImageCallback is not None:
+            buf = sample.get_buffer()
+            data = buf.extract_dup(0, buf.get_size())
+            caps = buf.get_caps()
+            self.img_mat = self.__convert_to_numpy(data, caps)
+            self.ImageCallback(self, *self.ImageCallbackData)
+        return Gst.FlowReturn.OK
 
     def set_sink_format(self, sf: SinkFormats):
         self.sinkformat = sf
@@ -132,66 +139,59 @@ class TIS:
             return False
         return True
 
-    def __convert_sample_to_numpy(self):
+    def __convert_to_numpy(self, data, caps):
         ''' Convert a GStreamer sample to a numpy array
             Sample code from https://gist.github.com/cbenhagen/76b24573fa63e7492fb6#file-gst-appsink-opencv-py-L34
 
             The result is in self.img_mat.
         :return:
         '''
-        self.samplelocked = True
-        buf = self.sample.get_buffer()
-        caps = self.sample.get_caps()
-        data = buf.extract_dup(0, buf.get_size())
 
-        bpp = 4
-        dtype = numpy.uint8
+        s = caps.get_structure(0)
+        fmt = s.get_value('format')
 
-        if (caps.get_structure(0).get_value('format') == "BGRx"):
+        if (fmt == "BGRx"):
+            dtype = numpy.uint8
             bpp = 4
-
-        if (caps.get_structure(0).get_value('format') == "GRAY8"):
+        elif (fmt == "GRAY8"):
+            dtype = numpy.uint8
             bpp = 1
-
-        if (caps.get_structure(0).get_value('format') == "GRAY16_LE"):
-            bpp = 1
+        elif (fmt == "GRAY16_LE"):
             dtype = numpy.uint16
+            bpp = 1
+        else:
+            raise RuntimeError(f"Unknown format in conversion to numpy array: {fmt}")
 
-        self.img_mat = numpy.ndarray(
-            (caps.get_structure(0).get_value('height'),
-             caps.get_structure(0).get_value('width'),
+        img_mat = numpy.ndarray(
+            (s.get_value('height'),
+             s.get_value('width'),
              bpp),
             buffer=data,
             dtype=dtype)
-        self.newsample = False
-        self.samplelocked = False
+        return img_mat
 
-    def wait_for_image(self, timeout):
-        ''' Wait for a new image with timeout
-        :param timeout: wait time in second, should be a float number
-        :return:
-        '''
-        tries = 10
-        while tries > 0 and not self.newsample:
-            tries -= 1
-            time.sleep(float(timeout) / 10.0)
-
-    def snap_image(self, timeout):
+    def snap_image(self, timeout, convert_to_mat=True):
         '''
         Snap an image from stream using a timeout.
         :param timeout: wait time in second, should be a float number. Not used
-        :return: bool: True, if we got a new image, otherwise false.
+        :return: Image data.
         '''
         if self.ImageCallback is not None:
             print("Snap_image can not be called, if a callback is set.")
-            return False
+            return None
 
-        self.wait_for_image(timeout)
-        if self.sample is not None and self.newsample:
-            self.__convert_sample_to_numpy()
-            return True
+        sample = self.appsink.emit("try-pull-sample", timeout * Gst.SECOND)
+        buf = sample.get_buffer()
+        data = buf.extract_dup(0, buf.get_size())
+        if convert_to_mat and sample is not None:
+            try:
+                self.img_mat = self.__convert_to_numpy(data, sample.get_caps())
+            except RuntimeError:
+                # unsuported format to convert to mat
+                # ignored to keep compatibility to old sample code
+                pass
 
-        return False
+        return data
 
     def get_image(self):
         return self.img_mat
@@ -263,6 +263,16 @@ class TIS:
     def set_image_callback(self, function, *data):
         self.ImageCallback = function
         self.ImageCallbackData = data
+
+    def __get_serial_by_index(self, index: int):
+        ' Return the serial number of the camera enumerated at given index'
+        monitor = Gst.DeviceMonitor.new()
+        monitor.add_filter("Video/Source/tcam")
+        devices = monitor.get_devices()
+        if (index < 0) or (index > len(devices)-1):
+            raise RuntimeError("Index out of bounds")
+        device = devices[index]
+        return device.get_properties().get_string("serial")
 
     def select_device(self):
         ''' Select a camera, its video format and frame rate
@@ -352,9 +362,6 @@ class TIS:
             try:
                 videoformat = structure.get_value("format")
 
-                if videoformat not in format_dict:
-                    format_dict[videoformat] = FmtDesc(name, videoformat)
-
                 width = structure.get_value("width")
                 height = structure.get_value("height")
 
@@ -364,7 +371,14 @@ class TIS:
                 for rate in rates:
                     tmprates.append(str(rate))
 
-                format_dict[videoformat].res_list.append(ResDesc(width, height, tmprates))
+                if type(videoformat) == Gst.ValueList:
+                    videoformats = videoformat
+                else:
+                    videoformats = [videoformat]
+                for fmt in videoformats:
+                    if videoformat not in format_dict:
+                        format_dict[fmt] = FmtDesc(name, videoformat)
+                    format_dict[fmt].res_list.append(ResDesc(width, height, tmprates))
             except Exception as error:
                 print(f"Exception during format enumeration: {str(error)}")
 

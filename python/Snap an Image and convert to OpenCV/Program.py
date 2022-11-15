@@ -37,7 +37,7 @@ cv2.namedWindow('Window')  # Create an OpenCV output window
 kernel = np.ones((5, 5), np.uint8)  # Create a Kernel for OpenCV erode function
 
 while lastkey != 27:
-    if Tis.snap_image(1) is True:  # Snap an image with one second timeout
+    if Tis.snap_image(1):  # Snap an image with one second timeout
         image = Tis.get_image()  # Get the image. It is a numpy array
         image = cv2.erode(image, kernel, iterations=5)  # Example OpenCV image processing
         cv2.imshow('Window', image)  # Display the result
