@@ -28,7 +28,7 @@ for cameraconfig in cameraconfigs['cameras']:
                        cameraconfig['width'],
                        cameraconfig['height'],
                        cameraconfig['framerate'],
-                       TIS.SinkFormats[cameraconfig['pixelformat']].value,
+                       TIS.SinkFormats[cameraconfig['pixelformat']],
                        True)
     cameras.append(camera)
 

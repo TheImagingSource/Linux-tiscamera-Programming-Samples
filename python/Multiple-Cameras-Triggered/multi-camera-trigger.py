@@ -121,7 +121,7 @@ for cameraconfig in cameraconfigs['cameras']:
                        cameraconfig['width'],
                        cameraconfig['height'],
                        cameraconfig['framerate'],
-                       TIS.SinkFormats[cameraconfig['pixelformat']].value,
+                       TIS.SinkFormats[cameraconfig['pixelformat']],
                        True)
 
     camera.set_image_callback(on_new_image, None)
