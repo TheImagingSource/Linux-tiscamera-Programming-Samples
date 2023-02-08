@@ -107,7 +107,7 @@ class TIS:
         if sample and self.ImageCallback is not None:
             buf = sample.get_buffer()
             data = buf.extract_dup(0, buf.get_size())
-            caps = buf.get_caps()
+            caps = sample.get_caps()
             self.img_mat = self.__convert_to_numpy(data, caps)
             self.ImageCallback(self, *self.ImageCallbackData)
         return Gst.FlowReturn.OK

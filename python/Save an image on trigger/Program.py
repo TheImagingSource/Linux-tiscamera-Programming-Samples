@@ -44,7 +44,7 @@ def on_new_image(tis, userdata):
 Tis = TIS.TIS()
 
 # The following line opens and configures the video capture device.
-# Tis.openDevice("41910044", 640, 480, "30/1",TIS.SinkFormats.BGRA, True)
+#Tis.open_device("03020073", 640, 480, "15/1",TIS.SinkFormats.BGRA, True)
 
 # The next line is for selecting a device, video format and frame rate.
 if not Tis.select_device():
