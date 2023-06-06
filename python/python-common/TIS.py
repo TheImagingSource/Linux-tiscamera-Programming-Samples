@@ -81,7 +81,7 @@ class TIS:
             p += " t. ! queue ! videoconvert ! ximagesink"
             p += f" t. ! queue ! {conversion} appsink name=sink"
         else:
-            p += f' ! {conversion} appsink name=sink'
+            p += f" ! {conversion} appsink name=sink"
 
         print(p)
         try:
