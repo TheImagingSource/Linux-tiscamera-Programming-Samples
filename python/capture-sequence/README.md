@@ -1,7 +1,9 @@
-# Capture an Image Sqeuence
+# Capture an Image Sequence
 This sample demonstrates how to capture images from the camera into
 an array of numpy as fast as possible. After the sequence has been 
 captured, the images are saved to hard disc usig OpenCV.
+The image capture is done very fast, so high camera frame rates
+can be used.
 
 It is an extremely simple sample without extensive error handling,
 e.g. check for enough memory.
