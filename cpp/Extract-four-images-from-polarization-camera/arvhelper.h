@@ -3,6 +3,7 @@
 
 #define TIS_PolarizedMono8 0x8108000a
 #define TIS_PolarizedMono12p 0x810c000b
+#define TIS_PolarizedMono12Packed 0x810c0010
 #define TIS_PolarizedMono16 0x8110000c
 
 #define TIS_PolarizedBayerBG8 0x8108000d

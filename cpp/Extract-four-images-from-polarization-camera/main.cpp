@@ -17,6 +17,7 @@ using namespace std;
 #define ARAVIS_STREAM_BUFFER_NB 10
 #define TRIGGERINTEVALL 1000
 
+
 ArvDevice *Device;
 ArvCamera *Camera;
 ArvStream *CameraStream;
@@ -38,7 +39,7 @@ typedef struct
 
 _MyData MyData;
 
-void CreatePolarImages(int width, int height, _MyData *pData)
+void CreatePolarImages(int width, int height, _MyData *pData, int bytesperpixel)
 {
    if (!pData->mat_created)
    {
@@ -46,7 +47,11 @@ void CreatePolarImages(int width, int height, _MyData *pData)
 		int w = width / 2;
 		for (int i = 0; i < 4; i++)
 		{
-			pData->grayImage[i].create( h, w, CV_8UC1);
+            if( bytesperpixel == 1)
+			    pData->grayImage[i].create( h, w, CV_8UC1);
+            else
+                pData->grayImage[i].create( h, w, CV_16UC1);
+
 			pData->colorImage[i].create(h , w, CV_8UC4);
 			char WindowName[256];
 			sprintf(WindowName, "Polarization %d", i + 1);
@@ -56,6 +61,43 @@ void CreatePolarImages(int width, int height, _MyData *pData)
 	}
 }
 
+/////////////////////////////////////////////////////////////////////////
+// Extract the four polarization angles. 
+//
+void CopyImageDatatoPolarImages(_MyData *pMyData)
+{
+    CreatePolarImages( pMyData->displayImage.cols, pMyData->displayImage.rows, pMyData, 2);
+
+    uint16_t* sourceData = (uint16_t*)pMyData->displayImage.data;
+    uint16_t* destPixel[4];
+
+    for (int i = 0; i < 4; i++)
+    {
+        destPixel[i] = (uint16_t*)pMyData->grayImage[i].data;
+    }
+
+    for (int y = 0; y < pMyData->displayImage.rows; y += 2)
+    {
+        for (int x = 0; x <  pMyData->displayImage.cols; x += 2)
+        {
+            *destPixel[1]++ = *sourceData++;
+            *destPixel[0]++ = *sourceData++;
+        }
+        for (int x = 0; x <  pMyData->displayImage.cols; x += 2)
+        {
+            *destPixel[2]++ = *sourceData++;
+            *destPixel[3]++ = *sourceData++;
+        }
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        cv::cvtColor(pMyData->grayImage[i], pMyData->colorImage[i], cv::COLOR_BayerRG2BGR);
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+//
 void ShowPolarImages(_MyData *pData)
 {
    for (int i = 0; i < 4; i++)
@@ -68,8 +110,8 @@ void ShowPolarImages(_MyData *pData)
    cv::waitKey(1);
 }
 
-
-
+/////////////////////////////////////////////////////////////////////////////////////
+//
 void StreamCallback(void* , ArvStreamCallbackType type, ArvBuffer* /*buffer*/)
 {
 	if (type == ARV_STREAM_CALLBACK_TYPE_INIT)
@@ -85,6 +127,153 @@ void StreamCallback(void* , ArvStreamCallbackType type, ArvBuffer* /*buffer*/)
 };
 
 
+void extractMono8(ArvBuffer *pBuffer,  _MyData *pMyData)
+{
+    int height = arv_buffer_get_image_height( pBuffer);
+    int width = arv_buffer_get_image_width( pBuffer);
+    
+    pMyData->displayImage.create( height, width, 
+                                    ArvPixelFormat2OpenCVType( pBuffer )
+                                    );
+
+    size_t buffersize;										   
+    const void* bytes = arv_buffer_get_data(pBuffer, &buffersize);
+    memcpy( pMyData->displayImage.data, bytes, buffersize );
+
+    if( strcmp(pMyData->displayWindowName,"") != 0)
+    {
+        cv::imshow(pMyData->displayWindowName, pMyData->displayImage);
+        cv::waitKey(1);
+    }
+    CreatePolarImages(width,height, pMyData, 1);
+
+    unsigned char* sourcePixel = (unsigned char*)bytes;
+    unsigned char* destPixel[4];
+
+    for (int i = 0; i < 4; i++)
+    {
+        destPixel[i] = pMyData->grayImage[i].data;
+    }
+
+    for (int y = 0; y < height; y += 2)
+    {
+        for (int x = 0; x < width; x += 2)
+        {
+            *destPixel[1]++ = *sourcePixel++;
+            *destPixel[0]++ = *sourcePixel++;
+        }
+        for (int x = 0; x < width; x += 2)
+        {
+            *destPixel[2]++ = *sourcePixel++;
+            *destPixel[3]++ = *sourcePixel++;
+        }
+    }
+
+    for (int i = 0; i < 4; i++)
+    {
+        cv::cvtColor(pMyData->grayImage[i], pMyData->colorImage[i], cv::COLOR_BayerRG2BGR);
+    }
+}
+
+/////////////////////////////////////////////////////////////////////////
+//
+void extractMono12p(ArvBuffer *pBuffer,  _MyData *pMyData)
+{
+    int height = arv_buffer_get_image_height( pBuffer);
+    int width = arv_buffer_get_image_width( pBuffer);
+    
+
+    size_t buffersize;										   
+    const void* bytes  = arv_buffer_get_data(pBuffer, &buffersize);
+    unsigned char *sourcePixel = (unsigned char *) bytes;
+    unsigned char *sourceEnd = sourcePixel + buffersize;    
+
+    pMyData->displayImage.create( height, width, CV_16UC1 );
+
+    unsigned char *pImagePixel = pMyData->displayImage.data;
+
+    while( sourcePixel < sourceEnd)    
+    {
+        uint16_t *p = (uint16_t *)pImagePixel;
+        // Bit-distribution order for USB cameras. 
+        // https://www.emva.org/wp-content/uploads/GenICam_PFNC_2_3.pdf page 34
+        p[0] = (static_cast<uint16_t>(sourcePixel[0]) << 4)  | ((static_cast<uint16_t>(sourcePixel[1]) & 0x0F) << 12) ;
+        p[1] = (static_cast<uint16_t>(sourcePixel[1]) & 0xF0 )  | ((static_cast<uint16_t>(sourcePixel[2])) << 8) ;
+
+        pImagePixel += 4;
+        sourcePixel += 3;
+    }
+
+    if( strcmp(pMyData->displayWindowName,"") != 0)
+    {
+        cv::imshow(pMyData->displayWindowName, pMyData->displayImage );
+        cv::waitKey(1);
+    }
+
+    CopyImageDatatoPolarImages(pMyData);
+    
+}
+
+/////////////////////////////////////////////////////////////////////////
+//
+void extractMono12Packed(ArvBuffer *pBuffer,  _MyData *pMyData)
+{
+    int height = arv_buffer_get_image_height( pBuffer);
+    int width = arv_buffer_get_image_width( pBuffer);
+    
+    size_t buffersize;										   
+    const void* bytes  = arv_buffer_get_data(pBuffer, &buffersize);
+    unsigned char *sourcePixel = (unsigned char *) bytes;
+    unsigned char *sourceEnd = sourcePixel + buffersize;    
+
+    pMyData->displayImage.create( height, width, CV_16UC1 );
+
+    unsigned char *pImagePixel = pMyData->displayImage.data;
+
+    while( sourcePixel < sourceEnd)    
+    {
+        uint16_t *p = (uint16_t *)pImagePixel;
+
+        // Bit-distribution order for GigE cameras. 
+        p[0] = (static_cast<uint16_t>(sourcePixel[0]) << 8 )| ((static_cast<uint16_t>(sourcePixel[1]) & 0xF0) ) ;
+        p[1] = (static_cast<uint16_t>(sourcePixel[1]) & 0x0F  << 4)  | ((static_cast<uint16_t>(sourcePixel[2])) << 8) ;
+
+        pImagePixel += 4;
+        sourcePixel += 3;
+    }
+
+    if( strcmp(pMyData->displayWindowName,"") != 0)
+    {
+        cv::imshow(pMyData->displayWindowName, pMyData->displayImage );
+        cv::waitKey(1);
+    }
+
+    CopyImageDatatoPolarImages(pMyData);
+}
+
+/////////////////////////////////////////////////////////////////////////
+//
+void extractMono16(ArvBuffer *pBuffer,  _MyData *pMyData)
+{
+    int height = arv_buffer_get_image_height( pBuffer);
+    int width = arv_buffer_get_image_width( pBuffer);
+    
+    pMyData->displayImage.create( height, width, CV_16UC1);
+
+    size_t buffersize;										   
+    const void* bytes = arv_buffer_get_data(pBuffer, &buffersize);
+    memcpy( pMyData->displayImage.data, bytes, buffersize );
+
+    if( strcmp(pMyData->displayWindowName,"") != 0)
+    {
+        cv::imshow(pMyData->displayWindowName, pMyData->displayImage);
+        cv::waitKey(1);
+    }
+
+    CopyImageDatatoPolarImages(pMyData);
+    return;
+}
+
 /////////////////////////////////////////////////////////////////////////
 //
 void AcquisitionCallback(ArvStream *pStream, void *pVoidData)
@@ -99,55 +288,32 @@ void AcquisitionCallback(ArvStream *pStream, void *pVoidData)
 		if (Status == ARV_BUFFER_STATUS_SUCCESS)
 		{
 			pMyData->ImageReceived = true;
+            switch (arv_buffer_get_image_pixel_format(pBuffer))
+            {
+            case TIS_PolarizedMono8:
+                extractMono8(pBuffer, pMyData);                
+                break;
 
-			int height = arv_buffer_get_image_height( pBuffer);
-			int width = arv_buffer_get_image_width( pBuffer);
+            case TIS_PolarizedMono12p:
+                extractMono12p(pBuffer, pMyData);                
+                break;
 
-			
-			pMyData->displayImage.create( height, width,
-										   ArvPixelFormat2OpenCVType( pBuffer )
-										   );
+            case TIS_PolarizedMono12Packed:
+                extractMono12Packed(pBuffer, pMyData);                
+                break;
 
-			size_t buffersize;										   
-			const void* bytes = arv_buffer_get_data(pBuffer, &buffersize);
-			memcpy( pMyData->displayImage.data, bytes, buffersize );
+            case TIS_PolarizedMono16:
+                extractMono16(pBuffer, pMyData);                
+                break;
 
-			if( strcmp(pMyData->displayWindowName,"") != 0)
-			{
-				cv::imshow(pMyData->displayWindowName, pMyData->displayImage);
-				cv::waitKey(1);
-			}
-			CreatePolarImages(width,height, pMyData);
+            default:
+                printf("Unsupported pixel format.\n");
+                exit(1);
+                break;
+            }
 
-			unsigned char* sourcePixel = (unsigned char*)bytes;
-			unsigned char* destPixel[4];
 
-			for (int i = 0; i < 4; i++)
-			{
-				destPixel[i] = pMyData->grayImage[i].data;
-			}
-
-			for (int y = 0; y < height; y += 2)
-			{
-				for (int x = 0; x < width; x += 2)
-				{
-					*destPixel[1]++ = *sourcePixel++;
-					*destPixel[0]++ = *sourcePixel++;
-				}
-				for (int x = 0; x < width; x += 2)
-				{
-					*destPixel[2]++ = *sourcePixel++;
-					*destPixel[3]++ = *sourcePixel++;
-				}
-			}
-
-			for (int i = 0; i < 4; i++)
-			{
-				cv::cvtColor(pMyData->grayImage[i], pMyData->colorImage[i], cv::COLOR_BayerRG2BGR);
-			}
-
-			ShowPolarImages(pMyData);
-			
+			ShowPolarImages(pMyData);		
 
 			arv_stream_push_buffer(pStream, pBuffer);
 		}
@@ -160,7 +326,7 @@ void AcquisitionCallback(ArvStream *pStream, void *pVoidData)
             }
             else
 			{
-                printf("%s\n",getErrormessage(Status).c_str());
+                //printf("%s\n",getErrormessage(Status).c_str());
             }
             arv_stream_push_buffer(pStream, pBuffer);
 			pMyData->error = true;
@@ -170,7 +336,6 @@ void AcquisitionCallback(ArvStream *pStream, void *pVoidData)
 	{
 		printf("Buffer is null\n");
 	}
-
 }
 
 /////////////////////////////////////////////////////////////////////////
@@ -192,10 +357,9 @@ bool StartAcquisition()
         
 		if (CameraStream != NULL)
 		{
-			gint payload  = 0;
-			payload = arv_camera_get_payload(Camera);
+			gint payload = arv_camera_get_payload(Camera);
 			/* Push ARAVIS_STREAM_BUFFER_NB buffers in the stream input buffer queue */
-			for (int nImage = 0; nImage < 10; nImage++)
+			for (int nImage = 0; nImage < 5; nImage++)
 				arv_stream_push_buffer(CameraStream, arv_buffer_new(payload, NULL));
 
 			if( arv_camera_is_gv_device (Camera))
@@ -206,7 +370,7 @@ bool StartAcquisition()
 						"packet-resend", ARV_GV_STREAM_PACKET_RESEND_ALWAYS,
 						NULL);
 			}
-			
+			 
 			/* Start the video stream */
 			arv_camera_start_acquisition(Camera);
 
@@ -242,8 +406,9 @@ void StopAcquisition()
 int main(int argc, char **argv)
 {
 	int Selection = 0;
+   
 
-	std::cout << "Aravis OpenCV" << std::endl;
+    std::cout << "Aravis OpenCV" << std::endl;
 
 	MyData.error = false;
 	MyData.mat_created = false;
@@ -265,12 +430,12 @@ int main(int argc, char **argv)
 		arv_camera_set_pixel_format(Camera,pixelformat);
 
 	arv_camera_set_region(Camera, 0, 0, 2448, 2048);
-	arv_camera_set_frame_rate(Camera, 30.0);
-
+	arv_camera_set_frame_rate(Camera, 30.0); 
 
 	if(	StartAcquisition())
 	{
 		char input = '\0';
+        
 		while(input != 'q')
 		{
 			printf("\nEnter q for quit :");

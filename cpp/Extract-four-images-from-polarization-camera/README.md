@@ -5,6 +5,8 @@ This sample shows how to extract the four images of the different polarization d
 * Polarization Camera needed
 * Aravis 0.8 needed
 
-In order to keep the sample simple, it handles MONO8 polarization format only, even if other formats can be seleted in the program. Changing to MONO16 should be easy.  
-
-Handling the color formats must take care of the Bayer Pattern organisation of the sensor. That is currently not part of the sample.
+Following video formats are currently supported:
+* Polarized Mono 8 
+* Polarized Mono 12 Packed USB (0x810c000b)
+* Polarized Mono 12 Packed GigE (0x810c0010)
+* Polarized Mono 16
