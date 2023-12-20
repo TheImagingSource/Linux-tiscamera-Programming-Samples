@@ -425,8 +425,6 @@ class ResDesc:
         self.resolution=f"{width}x{height}"
 
 
-
-
 class FmtDesc:
     """"""
 
