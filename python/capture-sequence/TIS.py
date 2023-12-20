@@ -452,6 +452,7 @@ class ResDesc:
         self.width = width
         self.height = height
         self.fps = fps
+        self.resolution=f"{width}x{height}"
 
 
 class FmtDesc:
