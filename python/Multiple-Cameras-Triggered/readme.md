@@ -50,7 +50,7 @@ for cameraconfig in cameraconfigs['cameras']:
     print( "Creating camera serial {}".format( cameraconfig['serial']) )
 
     camera = TIS.TIS()
-    camera.openDevice(cameraconfig['serial'],
+    camera.open_device(cameraconfig['serial'],
                                 cameraconfig['width'],
                                 cameraconfig['height'],
                                 cameraconfig['framerate'],
@@ -60,24 +60,24 @@ for cameraconfig in cameraconfigs['cameras']:
 
 
 for camera in cameras:
-    camera.Start_pipeline()
+    camera.start_pipeline()
 
 key = input("Enter to end program")
 
 for camera in cameras:
-    camera.Stop_pipeline()
+    camera.stop_pipeline()
 ```
 First of all the `cameras1.json` is opened and a `cameraconfigs` JSON object is created. That is read for each camera. A `TIS.TIS()` object is instatiated, the camera is opened and the object is added to a list. 
 
 All cameras are started in a simple loop:
 ```Python
 for camera in cameras:
-    camera.Start_pipeline()
+    camera.start_pipeline()
 ```
 And also stopped:
 ```Python
 for camera in cameras:
-    camera.Stop_pipeline()
+    camera.stop_pipeline()
 ```
 The Python script shows a live video window of all cameras. 
 
@@ -168,7 +168,7 @@ The new `CAMERA` class has a method for applying the properties from the Json ob
 ```Python 
     def applyProperties(self):
         for property in self.properties:
-            self.Set_Property(property['property'], property['value'])
+            self.set_property(property['property'], property['value'])
 ```
 As one can see, thist is very simple and short, because the JSON object handles the correct property value types already. But this ports the incoherent camera properties interface of tiscamera for v4l2 and GigE cameras to the JSON file "cameras1.json". Which has the advantage, that one does not need to handle that be many "if.." statements in the source code.
 
@@ -178,13 +178,13 @@ Therefore, in order to set properties, that have automatation the automation mus
 The camera start sequence with setting properties is shown by following code:
 ```Python
 for camera in cameras:
-    camera.Set_Property("Trigger Mode", "Off")
-    camera.Start_pipeline()
+    camera.set_property("Trigger Mode", "Off")
+    camera.start_pipeline()
     camera.applyProperties()
 ```
 The line 
 ```Python
-camera.Set_Property("Trigger Mode", "Off") 
+camera.set_property("Trigger Mode", "Off") 
 ```
 makes sure that the pipeline can be started. It will not start, if a camera is trigger mode, because it needs a frame running through the pipeline once in order to configure all GStreamer modules.
 
@@ -268,7 +268,7 @@ The callback function receives the camera object that called it. So the new imag
         
         imagefilename = "{0}_{1:04d}.jpg".format(self.imageprefix, self.imageCounter)
         print(imagefilename)
-        image = self.Get_image()
+        image = self.get_image()
         cv2.imwrite(imagefilename, image)
         self.busy = False
 ```
@@ -281,7 +281,7 @@ The start process for all cameras is:
 for camera in cameras:
     camera.enableTriggerMode( False )
     camera.busy = True
-    camera.Start_pipeline()
+    camera.start_pipeline()
     camera.applyProperties()
     camera.enableTriggerMode( True )
 ```
@@ -299,7 +299,7 @@ At the end of the program the trigger mode is disabled and the pipelines are sto
 ```Python
 for camera in cameras:
     camera.enableTriggerMode( False )
-    camera.Stop_pipeline()
+    camera.stop_pipeline()
 ```
 
 ### Optional: PTP for Synchronization.
@@ -312,17 +312,17 @@ schedulertime += 2000000 # Add two seconds so there is enough time to configure 
 for camera in cameras:
     camera.busy = False    
 
-    camera.Set_Property("PtpEnable",True)
-    camera.Set_Property("ActionSchedulerTime",schedulertime)
-    camera.Set_Property("ActionSchedulerInterval",1000000) # one image every second.
-    camera.Set_Property("ActionSchedulerCommit",1)
+    camera.set_property("PtpEnable",True)
+    camera.set_property("ActionSchedulerTime",schedulertime)
+    camera.set_property("ActionSchedulerInterval",1000000) # one image every second.
+    camera.set_property("ActionSchedulerCommit",1)
 ```
 Now all cameras send an image every second nearly at the same point of time.
 
 The camera stop must be enhanced with an Action Scheduler Cancel call:
 ```Python
 for camera in cameras:
-    camera.Set_Property("ActionSchedulerCancel",1)
+    camera.set_property("ActionSchedulerCancel",1)
     camera.enableTriggerMode( False )
-    camera.Stop_pipeline()
+    camera.stop_pipeline()
 ```
