@@ -40,41 +40,41 @@ import sys
 sys.path.append("../python-common")
 
 import TIS
-if not Tis.selectDevice():
+if not Tis.select_device():
         quit(0)
-Tis.setSinkFormat(TIS.SinkFormats.BGRA) #Use BGRA format in the Memory
-Tis.Start_pipeline()  # Start the pipeline so the camera streams
+Tis.set_sink_format(TIS.SinkFormats.BGRA) #Use BGRA format in the Memory
+Tis.start_pipeline()  # Start the pipeline so the camera streams
 
 while True:
         key = raw_input("f : Auto Focus\nf+ : increase focus\nf- : decrease focus\nz+ : increase zoom\n"
                         "z- : decrease zoom\nq : quit\nPlease enter:")
         if key == "f":
-                Tis.Set_Property("Focus Auto", True)
+                Tis.set_property("Focus Auto", True)
 
         if key == "f+":
-                focus = Tis.Get_Property("Focus").value
+                focus = Tis.get_property("Focus").value
                 focus = 10
-                Tis.Set_Property("Focus", focus)
+                Tis.set_property("Focus", focus)
 
         if key == "f-":
-                focus = Tis.Get_Property("Focus").value
+                focus = Tis.get_property("Focus").value
                 focus -= 10
-                Tis.Set_Property("Focus", focus)
+                Tis.set_property("Focus", focus)
 
         if key == "z+":
-                zoom = Tis.Get_Property("Zoom").value
+                zoom = Tis.get_property("Zoom").value
                 zoom += 1
-                Tis.Set_Property("Zoom", zoom)
+                Tis.set_property("Zoom", zoom)
 
         if key == "z-":
-                zoom = Tis.Get_Property("Zoom").value
+                zoom = Tis.get_property("Zoom").value
                 zoom -= 1
-                Tis.Set_Property("Zoom", zoom)
+                Tis.set_property("Zoom", zoom)
 
         if key == "q":
                 break
 
-Tis.Stop_pipeline()
+Tis.stop_pipeline()
 print('Program ends')
 
 ``` 
@@ -83,13 +83,13 @@ print('Program ends')
 In the constructur of TIS an existing The Imaging Source camera can be selected.
 
 ``` Python
-if not Tis.selectDevice():
+if not Tis.select_device():
         quit(0)
 ``` 
 
 After the TIS class instantiation the live video can be started
 ``` Python
-Tis.Start_pipeline()
+Tis.start_pipeline()
 ``` 
 The main loop can be started. It implements the main menu.
 
@@ -97,7 +97,7 @@ The main loop can be started. It implements the main menu.
 The cameras do not have a permanent auto focus, because the sharpness is estimated on an image. Then the a new focus value is set and the sharpness of the next image is compared with the previous one. This repeats, until a sharp image is achieved. 
 Running the auto focus on push is simple. Only a True must be set to the "Focus auto" property:
 ``` Python
-Tis.Set_Property("Focus Auto", True)
+Tis.set_property("Focus Auto", True)
 ``` 
 Currently it is unknown how long the algorithm will run. 
 
@@ -105,7 +105,7 @@ The other property functions are so far simple. Getting the current value of a p
 
 
 ``` Python
-Tis.Stop_pipeline()
+Tis.stop_pipeline()
 cv2.destroyAllWindows()
 print('Program ends')
 ``` 
