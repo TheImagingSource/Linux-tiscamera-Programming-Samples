@@ -29,7 +29,7 @@ def on_new_image(tis, userdata):
                 return
 
         userdata.busy = True
-        image = tis.Get_image()
+        image = tis.get_image()
 
         # Doing a sample image processing
         kernel = np.ones((5, 5), np.uint8)
@@ -63,7 +63,7 @@ CD = CustomData()
 ```
 The prerequisites for the callback are finished, now the TIS class must get this information. Before we start the live video, the callback is passed to the TIS class:
 ``` Python
-Tis.Set_Image_Callback(on_new_image, CD)
+Tis.set_image_callback(on_new_image, CD)
 ```
 ## Opening the Camera
 
@@ -73,41 +73,41 @@ Tis = TIS.TIS()
 #Tis.openDevice("00001234", 640, 480, "30/1",TIS.SinkFormats.BGRA, True)
 
 # The next line is for selecting a device, video format and frame rate.
-if not Tis.selectDevice():
+if not Tis.select_device():
         quit(0)
 ``` 
 After a device has been opened the live video can be started
 ``` Python
-Tis.Start_pipeline()
+Tis.start_pipeline()
 ``` 
 The live video is stopped, with
 ``` Python
-Tis.Stop_pipeline()
+Tis.stop_pipeline()
 ``` 
 
 ## Camera properties
 Camera automatics should be disabled, while the camera runs in trigger mode. Therefore some properties must be set. This is done with 
 ``` Python
-Tis.Set_Property(Propertyname, Propertyvalue)
+Tis.set_property(Propertyname, Propertyvalue)
 ```
 A list of properties can be shown by a call to 
 ``` Python
-Tis.List_Properties()
+Tis.list_properties()
 ```
 ### Trigger Mode
 ``` Python
-Tis.Set_Property("Trigger Mode", "Off")  # Use this line for GigE cameras
-# Tis.Set_Property("Trigger Mode", False)  # use this for USB cameras.
+Tis.set_property("Trigger Mode", "Off")  # Use this line for GigE cameras
+# Tis.set_property("Trigger Mode", False)  # use this for USB cameras.
 ```
 Unfortunately the Trigger Mode differs between USB and GigE cameras. The line above enables the trigger mode.
 Also there is another condition: 
-```Tis.Start_pipeline()``` does not return, if the Trigger Mode is enabled. Therefore, the Trigger Mode is disabled, then the pipeline is started and the Trigger Mode is enabled again. That is also the reason, why the ```CustomeData.busy``` flag is set to ```True``` before the pipeline is stated. It avoid the callback doing anything, while the trigger is not enabled. 
+```Tis.start_pipeline()``` does not return, if the Trigger Mode is enabled. Therefore, the Trigger Mode is disabled, then the pipeline is started and the Trigger Mode is enabled again. That is also the reason, why the ```CustomeData.busy``` flag is set to ```True``` before the pipeline is stated. It avoid the callback doing anything, while the trigger is not enabled. 
 So the start sequence is:
 ``` Python
-Tis.Set_Property("Trigger Mode", "Off")
+Tis.set_property("Trigger Mode", "Off")
 CD.busy = True 
-Tis.Start_pipeline()
-Tis.Set_Property("Trigger Mode", "On")
+Tis.start_pipeline()
+Tis.set_property("Trigger Mode", "On")
 # Wait a moment, for the camera accepting trigger mode and also emptyign
 # the pipeline
 time.sleep(0.1) 
@@ -119,16 +119,16 @@ As mentioned above, the automatics in the camera should be disabled, while the c
 ``` Python
 # In case a color camera is used, the white balance automatic must be
 # disabled, because this does not work good in trigger mode
-Tis.Set_Property("Whitebalance Auto", False)
-Tis.Set_Property("Whitebalance Red", 64)
-Tis.Set_Property("Whitebalance Green", 50)
-Tis.Set_Property("Whitebalance Blue", 64)
+Tis.set_property("Whitebalance Auto", False)
+Tis.set_property("Whitebalance Red", 64)
+Tis.set_property("Whitebalance Green", 50)
+Tis.set_property("Whitebalance Blue", 64)
 
 # Disable gain and exposure automatic
-Tis.Set_Property("Gain Auto", False)
-Tis.Set_Property("Gain",0)
-Tis.Set_Property("Exposure Auto", False)
-Tis.Set_Property("Exposure", 24000)
+Tis.set_property("Gain Auto", False)
+Tis.set_property("Gain",0)
+Tis.set_property("Exposure Auto", False)
+Tis.set_property("Exposure", 24000)
 ```
 
 ## Mainloop
