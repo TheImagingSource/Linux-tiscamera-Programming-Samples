@@ -121,7 +121,7 @@ CD = CustomData()
 ```
 It is passed to the callback:
 ```Python
-    camera.Set_Image_Callback(on_new_image, CD)                                
+    camera.set_image_callback(on_new_image, CD)                                
 ```
 (I must admit, I am not sure, whether this is really thread safe. Corrections are welcome!)
 
@@ -140,7 +140,7 @@ The main loop sends the software trigger to both cameras:
 
 ```Python
         for camera in cameras:
-            camera.Set_Property("Software Trigger",1)
+            camera.set_property("Software Trigger",1)
 ```
 Then in a loop the script waits for both images:
 ```Python
@@ -179,12 +179,12 @@ In order to recieve a good stereo 3D effect, the images of both cameras must be 
 ```Python
         if lastkey == 119:            
             y -= 2
-            cameras[0].Set_Property("Offset Y",y)
+            cameras[0].set_property("Offset Y",y)
             print("y  {} x1 {}  x2 {}".format( y, x1 ,x2 ) )
 
         if lastkey == 115:
             y += 2
-            cameras[0].Set_Property("Offset Y",y)
+            cameras[0].set_property("Offset Y",y)
             print("y  {} x1 {}  x2 {}".format( y, x1 ,x2 ) )
 ```
 Only the ROI of first camera is moved.
@@ -195,23 +195,23 @@ The 3D effect is better to see, if the objects in the scene are also on nearly t
 ```Python
         if lastkey == 97:
             x1 -= 2
-            cameras[0].Set_Property("Offset X",x1)
+            cameras[0].set_property("Offset X",x1)
             x2 += 2
             cameras[1].Set_Property("Offset X",x2)
             print("y  {} x1 {}  x2 {}".format( y, x1 ,x2 ) )
 
         if lastkey == 100:
             x1 += 2
-            cameras[0].Set_Property("Offset X",x1)
+            cameras[0].set_property("Offset X",x1)
             x2 -= 2
-            cameras[1].Set_Property("Offset X",x2)
+            cameras[1].set_property("Offset X",x2)
             print("y  {} x1 {}  x2 {}".format( y, x1 ,x2 ) )
 ```
 The initial values of `y`, `x1`and `x2` are queried after the cameras have been started the main loop starts:
 ```Python
-y = cameras[0].Get_Property("Offset Y").value
-x1= cameras[0].Get_Property("Offset X").value
-x2= cameras[1].Get_Property("Offset X").value
+y = cameras[0].set_property("Offset Y").value
+x1= cameras[0].set_property("Offset X").value
+x2= cameras[1].set_property("Offset X").value
 ```
 
 # Getting started:
