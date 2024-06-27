@@ -23,17 +23,17 @@ This is the main file of the sample.
 The device selection is done as follows:
 
 ``` Python
-if not Tis.selectDevice():
+if not Tis.select_device():
         quit(0)
 ``` 
 
 After TIS constrcution the live video can be started
 ``` Python
-Tis.Start_pipeline()
+Tis.start_pipeline()
 ``` 
 The live video is stopped, with
 ``` Python
-Tis.Stop_pipeline()
+Tis.stop_pipeline()
 ``` 
 
 If these three lines are used without anything else, no live video will be shown, because the pipeline in the TIS class does not use a display sink (e.g. ximagesink). The images are only saved in a ring buffer in memory.
@@ -82,33 +82,33 @@ Tis.Set_Image_Callback(on_new_image, CD)
 ## Camera properties
 Camera automatics should be disabled, while the camera runs in trigger mode. Therefore some properties must be set. This is done with 
 ``` Python
-Tis.Set_Property(Propertyname, Propertyvalue)
+Tis.set_property(Propertyname, Propertyvalue)
 ```
 A list of properties can be shown by a call to 
 ``` Python
-Tis.List_Properties()
+Tis.list_properties()
 ```
 ### Trigger Mode
 ``` Python
-# Tis.Set_Property("Trigger Mode", "On") # Use this line for GigE cameras
-Tis.Set_Property("Trigger Mode", True)
+# Tis.set_property("Trigger Mode", "On") # Use this line for GigE cameras
+Tis.set_property("Trigger Mode", True)
 ```
 Unfortunately the Trigger Mode differs between USB and GigE cameras. The line above enables the trigger mode.
 Also there is another condition: 
-```Tis.Start_pipeline()``` does not return, if the Trigger Mode is enabled. Therefore, the Trigger Mode is disabled, then the pipeline is started and the Trigger Mode is enabled again. That is also the reason, why the ```CustomeData.busy``` flag is set to ```True``` before the pipeline is stated. It avoid the callback doing anything, while the trigger is not enabled. 
+```Tis.start_pipeline()``` does not return, if the Trigger Mode is enabled. Therefore, the Trigger Mode is disabled, then the pipeline is started and the Trigger Mode is enabled again. That is also the reason, why the ```CustomeData.busy``` flag is set to ```True``` before the pipeline is stated. It avoid the callback doing anything, while the trigger is not enabled. 
 So the start sequence is:
 ``` Python
-Tis.Set_Property("Trigger Mode", False)
+Tis.set_property("Trigger Mode", False)
 CD.busy = True 
-Tis.Start_pipeline()
-Tis.Set_Property("Trigger Mode", True)
+Tis.start_pipeline()
+Tis.set_property("Trigger Mode", True)
 CD.busy = False
 ```
 
 ### Software Trigger
 The software trigger lets the camera expose one image and send it to the computer. It does the same, as a hardware trigger would do. Therefore, this sample will work with hardware trigger as well, only the software trigger property must not be set. The software trigger is set with following line of code:
 ``` Python
-Tis.Set_Property("Software Trigger",1) # Send a software trigger
+Tis.set_property("Software Trigger",1) # Send a software trigger
 ```
 That is all, because the function triggers only an action in the camera.
 
@@ -116,27 +116,27 @@ That is all, because the function triggers only an action in the camera.
 As mentioned above,the automatics in the camera should be disabled, while the camera is in trigger mode.
 ``` Python
 # White Balance properties, in case a color camera is in use:
-Tis.Set_Property("Whitebalance Auto", False)
-Tis.Set_Property("Whitebalance Red", 64)
-Tis.Set_Property("Whitebalance Green", 50)
-Tis.Set_Property("Whitebalance Blue", 64)
+Tis.set_property("Whitebalance Auto", False)
+Tis.set_property("Whitebalance Red", 64)
+Tis.set_property("Whitebalance Green", 50)
+Tis.set_property("Whitebalance Blue", 64)
 
 # Query the gain auto and current value :
-print("Gain Auto : %s " % Tis.Get_Property("Gain Auto").value)
-print("Gain : %d" % Tis.Get_Property("Gain").value)
+print("Gain Auto : %s " % Tis.get_property("Gain Auto").value)
+print("Gain : %d" % Tis.get_property("Gain").value)
 
 # Check, whether gain auto is enabled. If so, disable it.
-if Tis.Get_Property("Gain Auto").value :
-        Tis.Set_Property("Gain Auto",False)
-        print("Gain Auto now : %s " % Tis.Get_Property("Gain Auto").value)
+if Tis.get_property("Gain Auto").value :
+        Tis.set_property("Gain Auto",False)
+        print("Gain Auto now : %s " % Tis.get_property("Gain Auto").value)
 
 Tis.Set_Property("Gain",0)
 
 # Now do the same with exposure. Disable automatic if it was enabled
 # then set an exposure time.
-if Tis.Get_Property("Exposure Auto").value :
-        Tis.Set_Property("Exposure Auto", False)
-        print("Exposure Auto now : %s " % Tis.Get_Property("Exposure Auto").value)
+if Tis.get_property("Exposure Auto").value :
+        Tis.set_property("Exposure Auto", False)
+        print("Exposure Auto now : %s " % Tis.get_property("Exposure Auto").value)
 
 Tis.Set_Property("Exposure", 3000)
 ```
@@ -147,7 +147,7 @@ The main loop fires the software trigger and processes the image returned in ```
 try:
         while lastkey != 27 and error < 5:
                 time.sleep(1)
-                Tis.Set_Property("Software Trigger",1) # Send a software trigger
+                Tis.set_property("Software Trigger",1) # Send a software trigger
 
                 # Wait for a new image. Use 10 tries.
                 tries = 10
